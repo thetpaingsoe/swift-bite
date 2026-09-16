@@ -45,7 +45,7 @@ NestJS 11 / TypeScript 5.7 strict / Drizzle ORM / Neon Postgres / RabbitMQ / Con
 | rabbitmq | — | 5672/15672 | ✅ |
 
 ## Current Task
-Phase 6 — frontend layouts done (client + admin shells, role gating, RTK). Backend roles done (role column, JWT role, AdminGuard, 4 seeded users). Next: register page, then menu. See action-items.md (73/94).
+Phase 6 — menu + cart + checkout done and live-verified via compose (orders guard, AdminGuard, full order flow). Next: register page, then order tracking (needs GET /orders/:id). See action-items.md (82/94).
 
 ## Conventions
 - Feature tests over unit tests (every change production-ready)

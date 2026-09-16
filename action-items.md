@@ -16,7 +16,7 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `73 / 94 items completed (78%)`
+**Overall:** `82 / 94 items completed (87%)`
 
 ```
 Phase 1 — Foundation       [██████████]  33/33  (100%)
@@ -24,13 +24,13 @@ Phase 2 — Operations       [██████████]  20/20 (100%)
 Phase 3 — Observability    [██████░░░░]  8/13  (62%)
 Phase 4 — Resilience       [░░░░░░░░░░]  0/20  (0%)
 Phase 5 — Organization     [░░░░░░░░░░]  0/8   (0%)
-Phase 6 — Frontend         [█░░░░░░░░░]  1/8   (13%)
+Phase 6 — Frontend         [████░░░░░░]  4/8   (50%)
 Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 ```
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** User roles (admin/kitchen/rider/customer) + AdminGuard on item mutations + 4 seeded users + client/admin layout shells with role gating | **Date:** 2026-09-12
+**Last action completed:** Guest menu + cart + gated checkout live-verified (orders guard, AdminGuard 403, order placed end to end via compose) | **Date:** 2026-09-12
 
 ---
 
@@ -324,17 +324,17 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 - [x] Protected routes: redirect to login if not authenticated
 
 ### 6.3 Menu browsing
-- [ ] Build menu page with category tabs (Food / Drinks)
-- [ ] Fetch items from item-service API
-- [ ] Display items with image, name, description, price
-- [ ] Add to cart functionality (client-side state)
+- [x] Build menu page with category tabs (Food / Drinks)
+- [x] Fetch items from item-service API
+- [x] Display items with image, name, description, price
+- [x] Add to cart functionality (client-side state)
 
 ### 6.4 Order placement
-- [ ] Build cart/checkout page
-- [ ] Show cart items with quantity, unit price, total
-- [ ] Delivery address form (street + area)
-- [ ] Place order button → calls orders-service API
-- [ ] Show order confirmation with order ID
+- [x] Build cart/checkout page
+- [x] Show cart items with quantity, unit price, total
+- [x] Delivery address form (street + area)
+- [x] Place order button → calls orders-service API
+- [x] Show order confirmation with order ID
 
 ### 6.5 Order tracking
 - [ ] Build order history page (list of user's orders)

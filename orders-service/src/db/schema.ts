@@ -9,6 +9,7 @@ import {
 
 export const orders = pgTable('orders', {
   id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id'),
   customerName: varchar('customer_name', { length: 100 }).notNull(),
   menuItemId: uuid('menu_item_id').notNull(),
   itemName: varchar('item_name', { length: 255 }).notNull(),

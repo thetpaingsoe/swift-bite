@@ -57,6 +57,7 @@ services:
     environment:
       DATABASE_URL: ${ITEM_DATABASE_URL}
       PORT: 3001
+      AUTH_SERVICE_URL: http://auth-service:3000
       CONSUL_URL: http://consul:8500
       NODE_ENV: production
     depends_on:
@@ -78,6 +79,7 @@ services:
       PORT: 3002
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       ITEM_SERVICE_URL: http://item-service:3001
+      AUTH_SERVICE_URL: http://auth-service:3000
       CONSUL_URL: http://consul:8500
       NODE_ENV: production
     depends_on:

@@ -4,8 +4,11 @@ import { AdminRoute } from "./components/AdminRoute";
 import { ClientLayout } from "./components/ClientLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminDashboard } from "./routes/AdminDashboard";
-import { Home } from "./routes/Home";
+import { Cart } from "./routes/Cart";
+import { Checkout } from "./routes/Checkout";
+import { Confirmation } from "./routes/Confirmation";
 import { Login } from "./routes/Login";
+import { Menu } from "./routes/Menu";
 import { useAppSelector } from "./store/store";
 
 export default function App() {
@@ -24,15 +27,25 @@ export default function App() {
           )
         }
       />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <ClientLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Home />} />
+      <Route path="/" element={<ClientLayout />}>
+        <Route index element={<Menu />} />
+        <Route path="cart" element={<Cart />} />
+        <Route
+          path="checkout"
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="confirmation"
+          element={
+            <ProtectedRoute>
+              <Confirmation />
+            </ProtectedRoute>
+          }
+        />
       </Route>
       <Route
         path="/admin"
@@ -46,10 +59,7 @@ export default function App() {
       >
         <Route index element={<AdminDashboard />} />
       </Route>
-      <Route
-        path="*"
-        element={<Navigate to={token ? "/" : "/login"} replace />}
-      />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

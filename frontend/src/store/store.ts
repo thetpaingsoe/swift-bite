@@ -1,9 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
 import authReducer from "./auth-slice";
+import cartReducer from "./cart-slice";
 
 export const store = configureStore({
-  reducer: { auth: authReducer },
+  reducer: { auth: authReducer, cart: cartReducer },
 });
 
 store.subscribe(() => {
@@ -13,6 +14,7 @@ store.subscribe(() => {
   } else {
     localStorage.removeItem("swiftbite-auth");
   }
+  localStorage.setItem("swiftbite-cart", JSON.stringify(store.getState().cart));
 });
 
 export type RootState = ReturnType<typeof store.getState>;

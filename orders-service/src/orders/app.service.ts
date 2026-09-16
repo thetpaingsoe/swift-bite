@@ -36,7 +36,7 @@ export class AppService {
     private readonly configService: ConfigService,
   ) {}
 
-  async createOrder(dto: CreateOrderDto) {
+  async createOrder(dto: CreateOrderDto, userId?: string) {
     const item = await this.fetchItem(dto.menuItemId);
 
     const totalPrice = item.price * dto.quantity;
@@ -49,6 +49,7 @@ export class AppService {
       [order] = await this.dbService.db
         .insert(orders)
         .values({
+          userId: userId ?? null,
           customerName: dto.customerName,
           menuItemId: dto.menuItemId,
           itemName: item.name,

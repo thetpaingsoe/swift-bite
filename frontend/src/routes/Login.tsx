@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import { login } from "../api/auth";
@@ -19,6 +19,7 @@ type FormValues = z.infer<typeof schema>;
 
 export function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const {
     register,
@@ -36,7 +37,8 @@ export function Login() {
         }),
       );
       toast.success(`Welcome back, ${res.name}`);
-      navigate(res.role === "admin" ? "/admin" : "/", { replace: true });
+      const from = (location.state as { from?: string } | null)?.from;
+      navigate(from ?? (res.role === "admin" ? "/admin" : "/"), { replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
     }

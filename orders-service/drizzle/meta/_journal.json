@@ -22,6 +22,13 @@
       "when": 1788969974670,
       "tag": "0002_sloppy_shatterstar",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789573079556,
+      "tag": "0003_bitter_famine",
+      "breakpoints": true
     }
   ]
 }

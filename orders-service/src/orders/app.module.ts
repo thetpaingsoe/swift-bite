@@ -14,6 +14,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import Joi from 'joi';
 import { DbService } from '../db/db.service';
+import { AuthGuard } from '../auth/auth.guard';
 import { HealthModule } from '../health/health.module';
 import { ConsulService } from '../consul/consul.service';
 import { DiscoveryService } from '../consul/discovery.service';
@@ -27,6 +28,7 @@ import { DiscoveryService } from '../consul/discovery.service';
         PORT: Joi.number().default(3000),
         RABBITMQ_URL: Joi.string().default('amqp://guest:guest@localhost:5672'),
         ITEM_SERVICE_URL: Joi.string().default('http://localhost:3001'),
+        AUTH_SERVICE_URL: Joi.string().default('http://localhost:3000'),
         CONSUL_URL: Joi.string().default('http://localhost:8500'),
         SERVICE_NAME: Joi.string().default('orders-service'),
         SERVICE_ADDRESS: Joi.string().default('orders-service'),
@@ -92,7 +94,7 @@ import { DiscoveryService } from '../consul/discovery.service';
     HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, DbService, ConsulService, DiscoveryService],
+  providers: [AppService, DbService, AuthGuard, ConsulService, DiscoveryService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
