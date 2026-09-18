@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req, UseGuards, Logger } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Req, UseGuards, Logger } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { AppService } from './app.service';
 import { AuthGuard } from '../auth/auth.guard';
@@ -30,6 +30,12 @@ export class AppController {
   @UseGuards(AuthGuard)
   async getOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.appService.getOrder(id, req.user?.userId, req.user?.role);
+  }
+
+  @Patch(':id/cancel')
+  @UseGuards(AuthGuard)
+  async cancelOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.appService.cancelOrder(id, req.user?.userId, req.user?.role);
   }
 
   @EventPattern('order_cooking')

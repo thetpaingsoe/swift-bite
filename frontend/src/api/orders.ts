@@ -38,3 +38,9 @@ export function listOrders() {
 export function getOrder(id: string) {
   return apiFetch(`${ORDERS_URL}/orders/${id}`) as Promise<Order>;
 }
+
+export function cancelOrder(id: string) {
+  return apiFetch(`${ORDERS_URL}/orders/${id}/cancel`, {
+    method: "PATCH",
+  }) as Promise<Order>;
+}

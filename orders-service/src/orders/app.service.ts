@@ -4,6 +4,7 @@ import {
   Logger,
   NotFoundException,
   BadGatewayException,
+  ConflictException,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ClientProxy } from '@nestjs/microservices';
@@ -124,6 +125,16 @@ export class AppService {
   }
 
   async updateStatus(orderId: string, status: string) {
+    const [current] = await this.dbService.db
+      .select({ status: orders.status })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!current || current.status === 'cancelled') {
+      return current;
+    }
+
     const [order] = await this.dbService.db
       .update(orders)
       .set({ status })
@@ -135,6 +146,26 @@ export class AppService {
     }
 
     return order;
+  }
+
+  async cancelOrder(id: string, userId?: string, role?: string) {
+    const order = await this.getOrder(id, userId, role);
+
+    if (order.status !== 'pending') {
+      throw new ConflictException(
+        `Order cannot be cancelled from status ${order.status}`,
+      );
+    }
+
+    const [cancelled] = await this.dbService.db
+      .update(orders)
+      .set({ status: 'cancelled' })
+      .where(eq(orders.id, id))
+      .returning();
+
+    this.logger.log(`Order ${id} cancelled by user ${userId}`);
+
+    return cancelled;
   }
 
   private async fetchItem(menuItemId: string): Promise<MenuItem> {
