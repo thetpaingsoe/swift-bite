@@ -1,8 +1,11 @@
 packages:
   - '.'
 
+nodeLinker: hoisted
+
 allowBuilds:
   esbuild: true
   '@parcel/watcher': true
   unrs-resolver: true
   bcrypt: true
+  '@scarf/scarf': false

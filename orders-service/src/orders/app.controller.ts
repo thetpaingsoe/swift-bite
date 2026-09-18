@@ -1,5 +1,10 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Req, UseGuards, Logger } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -9,6 +14,7 @@ import {
 } from '../correlation/correlation.storage';
 
 @Controller('orders')
+@ApiBearerAuth()
 export class AppController {
   private readonly logger = new Logger(AppController.name);
 
@@ -16,24 +22,37 @@ export class AppController {
 
   @Post()
   @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Place an order for one menu item' })
+  @ApiResponse({ status: 201, description: 'Order placed, returns orderId' })
+  @ApiResponse({ status: 401, description: 'Invalid token' })
+  @ApiResponse({ status: 404, description: 'Menu item not found' })
   async createOrder(@Body() dto: CreateOrderDto, @Req() req: any) {
     return this.appService.createOrder(dto, req.user?.userId);
   }
 
   @Get()
   @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'List my orders (admin sees all)' })
+  @ApiResponse({ status: 200, description: 'Order list' })
   async listOrders(@Req() req: any) {
     return this.appService.listOrders(req.user?.userId, req.user?.role);
   }
 
   @Get(':id')
   @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Get one order with its status' })
+  @ApiResponse({ status: 200, description: 'The order' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
   async getOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.appService.getOrder(id, req.user?.userId, req.user?.role);
   }
 
   @Patch(':id/cancel')
   @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Cancel a pending order' })
+  @ApiResponse({ status: 200, description: 'Order cancelled' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
+  @ApiResponse({ status: 409, description: 'Order is past pending' })
   async cancelOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.appService.cancelOrder(id, req.user?.userId, req.user?.role);
   }

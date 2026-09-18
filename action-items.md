@@ -16,12 +16,12 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `83 / 94 items completed (88%)`
+**Overall:** `88 / 94 items completed (94%)`
 
 ```
 Phase 1 — Foundation       [██████████]  33/33  (100%)
 Phase 2 — Operations       [██████████]  20/20 (100%)
-Phase 3 — Observability    [██████░░░░]  8/13  (62%)
+Phase 3 — Observability    [██████████]  13/13 (100%)
 Phase 4 — Resilience       [░░░░░░░░░░]  0/20  (0%)
 Phase 5 — Organization     [░░░░░░░░░░]  0/8   (0%)
 Phase 6 — Frontend         [█████░░░░░]  5/8   (62%)
@@ -30,7 +30,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** User cancel for pending orders live (PATCH /orders/:id/cancel, 409 past pending, late events cannot revive cancelled) | **Date:** 2026-09-12
+**Last action completed:** Swagger live on auth/item/orders with bearer auth (fixed pnpm dual-Nest boot crash via nodeLinker hoisted) | **Date:** 2026-09-12
 
 ---
 
@@ -185,11 +185,11 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 - [x] This lets you trace a single order through all 3 services (verified live: one ID in 3 DB rows + 3 log streams; column persisted as nullable `varchar(36)`, no backfill; auth/item also honor `x-correlation-id` in middleware + logs, no persistence there)
 
 ### 3.3 Add Swagger/OpenAPI docs
-- [ ] Install `@nestjs/swagger` in orders-service
-- [ ] Add `SwaggerModule.setup('api', app, document)` in `main.ts`
-- [ ] Decorate `CreateOrderDto` with `@ApiProperty()` decorators
-- [ ] Decorate `AppController.createOrder()` with `@ApiOperation()`, `@ApiResponse()`
-- [ ] Access docs at `http://localhost:3000/api` (Swagger UI)
+- [x] Install `@nestjs/swagger` in auth, item, and orders services (v11 to match Nest 11)
+- [x] Add `SwaggerModule.setup('api', app, document)` in each `main.ts` with bearer auth
+- [x] Decorate DTOs with `@ApiProperty()` decorators (register, login, items, categories, orders)
+- [x] Decorate controllers with `@ApiOperation()`, `@ApiResponse()`, `@ApiBearerAuth()`
+- [x] Access docs at `http://localhost:3000/api`, `:3001/api`, `:3002/api` (Swagger UI, verified live)
 
 ---
 
