@@ -16,7 +16,7 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `82 / 94 items completed (87%)`
+**Overall:** `83 / 94 items completed (88%)`
 
 ```
 Phase 1 — Foundation       [██████████]  33/33  (100%)
@@ -24,13 +24,13 @@ Phase 2 — Operations       [██████████]  20/20 (100%)
 Phase 3 — Observability    [██████░░░░]  8/13  (62%)
 Phase 4 — Resilience       [░░░░░░░░░░]  0/20  (0%)
 Phase 5 — Organization     [░░░░░░░░░░]  0/8   (0%)
-Phase 6 — Frontend         [████░░░░░░]  4/8   (50%)
+Phase 6 — Frontend         [█████░░░░░]  5/8   (62%)
 Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 ```
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** Guest menu + cart + gated checkout live-verified (orders guard, AdminGuard 403, order placed end to end via compose) | **Date:** 2026-09-12
+**Last action completed:** Register page done + live-verified (new user gets customer role + token) | **Date:** 2026-09-12
 
 ---
 
@@ -318,7 +318,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 
 ### 6.2 Auth pages
 - [x] Build login page (email + password form)
-- [ ] Build register page (name + email + password form)
+- [x] Build register page (name + email + password form)
 - [x] Store JWT in localStorage/httpOnly cookie
 - [x] Add auth context/hook for managing user state
 - [x] Protected routes: redirect to login if not authenticated

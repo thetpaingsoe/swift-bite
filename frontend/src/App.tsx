@@ -9,6 +9,7 @@ import { Checkout } from "./routes/Checkout";
 import { Confirmation } from "./routes/Confirmation";
 import { Login } from "./routes/Login";
 import { Menu } from "./routes/Menu";
+import { Register } from "./routes/Register";
 import { useAppSelector } from "./store/store";
 
 export default function App() {
@@ -26,6 +27,10 @@ export default function App() {
             <Login />
           )
         }
+      />
+      <Route
+        path="/register"
+        element={token ? <Navigate to="/" replace /> : <Register />}
       />
       <Route path="/" element={<ClientLayout />}>
         <Route index element={<Menu />} />
