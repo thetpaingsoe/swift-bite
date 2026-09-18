@@ -1,5 +1,6 @@
 import { Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { LoggerModule } from 'nestjs-pino';
 import Joi from 'joi';
 import { AppController } from './app.controller';
@@ -56,6 +57,22 @@ import { correlationStorage } from '../correlation/correlation.storage';
         };
       },
     }),
+    ClientsModule.registerAsync([
+      {
+        name: 'ORDERS_SERVICE',
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URL')!],
+            queue: 'orders_queue',
+            queueOptions: {
+              durable: configService.get<string>('NODE_ENV') === 'production',
+            },
+          },
+        }),
+        inject: [ConfigService],
+      },
+    ]),
   ],
   controllers: [AppController],
   providers: [AppService, DbService, ConsulService],

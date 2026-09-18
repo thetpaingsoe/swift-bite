@@ -72,6 +72,20 @@ import { correlationStorage } from '../correlation/correlation.storage';
         }),
         inject: [ConfigService],
       },
+      {
+        name: 'ORDERS_SERVICE',
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get<string>('RABBITMQ_URL')!],
+            queue: 'orders_queue',
+            queueOptions: {
+              durable: configService.get<string>('NODE_ENV') === 'production',
+            },
+          },
+        }),
+        inject: [ConfigService],
+      },
     ]),
   ],
   controllers: [AppController],

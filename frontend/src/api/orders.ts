@@ -16,3 +16,25 @@ export function placeOrder(input: PlaceOrderInput) {
     body: JSON.stringify(input),
   }) as Promise<{ success: boolean; orderId: string }>;
 }
+
+export interface Order {
+  id: string;
+  customerName: string;
+  menuItemId: string;
+  itemName: string;
+  itemPrice: string;
+  quantity: number;
+  totalPrice: string;
+  street: string;
+  area: string;
+  status: string;
+  createdAt: string;
+}
+
+export function listOrders() {
+  return apiFetch(`${ORDERS_URL}/orders`) as Promise<Order[]>;
+}
+
+export function getOrder(id: string) {
+  return apiFetch(`${ORDERS_URL}/orders/${id}`) as Promise<Order>;
+}

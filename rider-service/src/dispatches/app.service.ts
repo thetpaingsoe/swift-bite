@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom, timeout } from 'rxjs';
 import { DbService } from '../db/db.service';
 import { dispatches } from '../db/schema';
 
@@ -7,7 +9,10 @@ const RIDERS = ['Mike', 'Alex', 'Joe', 'Bright'];
 export class AppService {
   private readonly logger = new Logger(AppService.name);
 
-  constructor(private readonly dbService: DbService) {}
+  constructor(
+    @Inject('ORDERS_SERVICE') private readonly ordersClient: ClientProxy,
+    private readonly dbService: DbService,
+  ) {}
 
   async dispatchRider(data: {
     orderId: string;
@@ -47,5 +52,23 @@ export class AppService {
     this.logger.log(
       rider + ' is on the way with your item ' + dispatch.itemName,
     );
+
+    try {
+      await firstValueFrom(
+        this.ordersClient
+          .emit('order_dispatched', {
+            orderId: data.orderId,
+            riderName: rider,
+            correlationId: data.correlationId,
+          })
+          .pipe(timeout(5000)),
+      );
+      this.logger.log('Event emitted to orders_queue (order dispatched)');
+    } catch (error) {
+      this.logger.error(
+        `Dispatch ${dispatch.orderId} saved but could not notify orders`,
+        error as Error,
+      );
+    }
   }
 }

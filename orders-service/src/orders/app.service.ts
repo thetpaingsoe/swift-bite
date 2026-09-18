@@ -8,6 +8,7 @@ import {
 import { HttpService } from '@nestjs/axios';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
+import { desc, eq } from 'drizzle-orm';
 import { orders } from '../db/schema';
 import { DbService } from '../db/db.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -92,6 +93,48 @@ export class AppService {
     }
 
     return { success: true, orderId: order.id };
+  }
+
+  async listOrders(userId?: string, role?: string) {
+    if (role === 'admin') {
+      return this.dbService.db
+        .select()
+        .from(orders)
+        .orderBy(desc(orders.createdAt));
+    }
+    return this.dbService.db
+      .select()
+      .from(orders)
+      .where(eq(orders.userId, userId ?? ''))
+      .orderBy(desc(orders.createdAt));
+  }
+
+  async getOrder(id: string, userId?: string, role?: string) {
+    const [order] = await this.dbService.db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, id))
+      .limit(1);
+
+    if (!order || (role !== 'admin' && order.userId !== userId)) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    return order;
+  }
+
+  async updateStatus(orderId: string, status: string) {
+    const [order] = await this.dbService.db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, orderId))
+      .returning();
+
+    if (order) {
+      this.logger.log(`Order ${orderId} status updated to ${status}`);
+    }
+
+    return order;
   }
 
   private async fetchItem(menuItemId: string): Promise<MenuItem> {

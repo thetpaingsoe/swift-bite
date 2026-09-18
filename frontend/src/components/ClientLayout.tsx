@@ -30,6 +30,11 @@ export function ClientLayout() {
             <Link to="/cart" className="text-stone-600 hover:text-stone-900">
               Cart{cartCount > 0 ? ` (${cartCount})` : ""}
             </Link>
+            {user && (
+              <Link to="/orders" className="text-stone-600 hover:text-stone-900">
+                Orders
+              </Link>
+            )}
             {user?.role === "admin" && (
               <Link to="/admin" className="text-stone-600 hover:text-stone-900">
                 Admin

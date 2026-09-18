@@ -9,6 +9,8 @@ import { Checkout } from "./routes/Checkout";
 import { Confirmation } from "./routes/Confirmation";
 import { Login } from "./routes/Login";
 import { Menu } from "./routes/Menu";
+import { OrderDetail } from "./routes/OrderDetail";
+import { Orders } from "./routes/Orders";
 import { Register } from "./routes/Register";
 import { useAppSelector } from "./store/store";
 
@@ -48,6 +50,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Confirmation />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders"
+          element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders/:id"
+          element={
+            <ProtectedRoute>
+              <OrderDetail />
             </ProtectedRoute>
           }
         />

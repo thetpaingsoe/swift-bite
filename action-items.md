@@ -30,7 +30,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** Register page done + live-verified (new user gets customer role + token) | **Date:** 2026-09-12
+**Last action completed:** Event-driven order statuses live (pending→cooking→ready→dispatched via orders_queue, verified in DB + logs) | **Date:** 2026-09-12
 
 ---
 
