@@ -1,8 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Search, Trash2 } from "lucide-react";
+import { ArrowUpDown, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { deleteCategory, listCategories, type Category } from "../api/items";
+import {
+  deleteCategory,
+  listCategories,
+  type Category,
+} from "../api/items";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
@@ -86,15 +91,22 @@ export function AdminCategories() {
             {rows.length} {rows.length === 1 ? "category" : "categories"}
           </p>
         </div>
-        <div className="relative w-full sm:w-64">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-          <Input
-            placeholder="Search categories..."
-            value={search}
-            onChange={(e) => onSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+            <Input
+              placeholder="Search categories..."
+              value={search}
+              onChange={(e) => onSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Link to="/admin/categories/new">
+            <Button>
+              <Plus className="h-4 w-4" />
+              Add category
+            </Button>
+          </Link>        </div>
       </div>
 
       {isError && (
@@ -146,14 +158,23 @@ export function AdminCategories() {
                   <td className="px-4 py-3 font-medium text-stone-900">{category.name}</td>
                   <td className="px-4 py-3 text-stone-500">{formatDate(category.createdAt)}</td>
                   <td className="px-4 py-3">
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer border-0 px-0 text-red-600 hover:bg-transparent hover:text-red-800"
-                      onClick={() => setPendingDelete(category)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </Button>
+                    <div className="flex items-center gap-4">
+                      <Link
+                        to={`/admin/categories/${category.id}/edit`}
+                        className="inline-flex cursor-pointer items-center gap-1 text-sm text-stone-600 hover:text-stone-900"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </Link>
+                      <Button
+                        variant="outline"
+                        className="cursor-pointer border-0 px-0 text-red-600 hover:bg-transparent hover:text-red-800"
+                        onClick={() => setPendingDelete(category)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

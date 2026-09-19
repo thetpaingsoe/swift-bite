@@ -93,7 +93,9 @@ export function AdminLayout() {
           ))}
         </nav>
         <main className="mx-auto max-w-5xl px-4 py-8">
-          <Outlet />
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 sm:p-8">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

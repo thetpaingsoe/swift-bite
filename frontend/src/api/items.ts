@@ -28,6 +28,20 @@ export function deleteCategory(id: string) {
   }) as Promise<{ message: string }>;
 }
 
+export function createCategory(name: string) {
+  return apiFetch(`${ITEM_URL}/categories`, {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  }) as Promise<Category>;
+}
+
+export function updateCategory(id: string, name: string) {
+  return apiFetch(`${ITEM_URL}/categories/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ name }),
+  }) as Promise<Category>;
+}
+
 export function listItems(categoryId?: string) {
   const query = categoryId ? `?category_id=${categoryId}` : "";
   return apiFetch(`${ITEM_URL}/items${query}`) as Promise<MenuItem[]>;
