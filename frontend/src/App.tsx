@@ -4,6 +4,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import { ClientLayout } from "./components/ClientLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminDashboard } from "./routes/AdminDashboard";
+import { AdminPlaceholder } from "./routes/AdminPlaceholder";
 import { Cart } from "./routes/Cart";
 import { Checkout } from "./routes/Checkout";
 import { Confirmation } from "./routes/Confirmation";
@@ -81,6 +82,9 @@ export default function App() {
         }
       >
         <Route index element={<AdminDashboard />} />
+        <Route path="categories" element={<AdminPlaceholder title="Category" />} />
+        <Route path="items" element={<AdminPlaceholder title="Item" />} />
+        <Route path="orders" element={<AdminPlaceholder title="Orders" />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
