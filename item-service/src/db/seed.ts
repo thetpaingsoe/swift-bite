@@ -31,7 +31,7 @@ async function seed() {
     {
       name: 'Margherita Pizza',
       description: 'Classic tomato sauce, mozzarella, and fresh basil',
-      price: 1299,
+      price: '1299',
       categoryId: food.id,
       imageUrl:
         'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=400',
@@ -41,7 +41,7 @@ async function seed() {
       name: 'Chicken Tikka Masala',
       description:
         'Tender chicken in creamy tomato curry sauce, served with basmati rice',
-      price: 1499,
+      price: '1499',
       categoryId: food.id,
       imageUrl:
         'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400',
@@ -51,7 +51,7 @@ async function seed() {
       name: 'Caesar Salad',
       description:
         'Romaine lettuce, croutons, parmesan, house-made Caesar dressing',
-      price: 999,
+      price: '999',
       categoryId: food.id,
       imageUrl:
         'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',
@@ -61,7 +61,7 @@ async function seed() {
       name: 'Classic Cheeseburger',
       description:
         'Angus beef patty, cheddar, lettuce, tomato, pickles, special sauce',
-      price: 1399,
+      price: '1399',
       categoryId: food.id,
       imageUrl:
         'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',
@@ -70,7 +70,7 @@ async function seed() {
     {
       name: 'Iced Latte',
       description: 'Espresso with cold milk over ice',
-      price: 599,
+      price: '599',
       categoryId: drinks.id,
       imageUrl:
         'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400',
@@ -79,7 +79,7 @@ async function seed() {
     {
       name: 'Mango Smoothie',
       description: 'Fresh mango, yogurt, honey, blended until smooth',
-      price: 699,
+      price: '699',
       categoryId: drinks.id,
       imageUrl:
         'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=400',
@@ -88,7 +88,7 @@ async function seed() {
     {
       name: 'Sparkling Water',
       description: 'Chilled sparkling mineral water',
-      price: 299,
+      price: '299',
       categoryId: drinks.id,
       imageUrl:
         'https://images.unsplash.com/photo-1523362628745-0c100fc988a6?w=400',

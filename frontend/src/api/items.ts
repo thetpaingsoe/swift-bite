@@ -16,6 +16,7 @@ export interface MenuItem {
   categoryId: string;
   imageUrl: string;
   available: boolean;
+  createdAt: string;
 }
 
 export function listCategories() {
@@ -44,5 +45,36 @@ export function updateCategory(id: string, name: string) {
 
 export function listItems(categoryId?: string) {
   const query = categoryId ? `?category_id=${categoryId}` : "";
-  return apiFetch(`${ITEM_URL}/items${query}`) as Promise<MenuItem[]>;
+  return apiFetch(`${ITEM_URL}/items${query}`).then((items) =>
+    (items as MenuItem[]).map((item) => ({ ...item, price: Number(item.price) })),
+  ) as Promise<MenuItem[]>;
+}
+
+export interface ItemInput {
+  name: string;
+  description: string;
+  price: number;
+  categoryId: string;
+  imageUrl: string;
+  available: boolean;
+}
+
+export function createItem(input: ItemInput) {
+  return apiFetch(`${ITEM_URL}/items`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  }) as Promise<MenuItem>;
+}
+
+export function updateItem(id: string, input: Partial<ItemInput>) {
+  return apiFetch(`${ITEM_URL}/items/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  }) as Promise<MenuItem>;
+}
+
+export function deleteItem(id: string) {
+  return apiFetch(`${ITEM_URL}/items/${id}`, {
+    method: "DELETE",
+  }) as Promise<{ message: string }>;
 }

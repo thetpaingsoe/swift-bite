@@ -125,7 +125,7 @@ export class ItemsService {
         .values({
           name: dto.name,
           description: dto.description,
-          price: dto.price,
+          price: String(dto.price),
           categoryId: dto.categoryId,
           imageUrl: dto.imageUrl,
           available: dto.available ?? true,
@@ -164,7 +164,10 @@ export class ItemsService {
 
     const [updated] = await this.dbService.db
       .update(menuItems)
-      .set(dto)
+      .set({
+        ...dto,
+        price: dto.price === undefined ? undefined : String(dto.price),
+      })
       .where(eq(menuItems.id, id))
       .returning();
 

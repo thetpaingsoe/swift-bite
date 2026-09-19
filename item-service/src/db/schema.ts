@@ -3,7 +3,7 @@ import {
   uuid,
   varchar,
   text,
-  integer,
+  numeric,
   boolean,
   timestamp,
 } from 'drizzle-orm/pg-core';
@@ -18,7 +18,7 @@ export const menuItems = pgTable('menu_items', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description').notNull(),
-  price: integer('price').notNull(),
+  price: numeric('price').notNull(),
   categoryId: uuid('category_id')
     .notNull()
     .references(() => categories.id, { onDelete: 'cascade' }),

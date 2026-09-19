@@ -23,7 +23,7 @@ import {
 interface MenuItem {
   id: string;
   name: string;
-  price: number;
+  price: number | string;
 }
 
 @Injectable()
@@ -41,7 +41,8 @@ export class AppService {
   async createOrder(dto: CreateOrderDto, userId?: string) {
     const item = await this.fetchItem(dto.menuItemId);
 
-    const totalPrice = item.price * dto.quantity;
+    const unitPrice = Number(item.price);
+    const totalPrice = unitPrice * dto.quantity;
     const { correlationId } = resolveCorrelationId(
       correlationStorage.getStore()?.correlationId,
     );
@@ -55,7 +56,7 @@ export class AppService {
           customerName: dto.customerName,
           menuItemId: dto.menuItemId,
           itemName: item.name,
-          itemPrice: String(item.price),
+          itemPrice: String(unitPrice),
           quantity: dto.quantity,
           totalPrice: String(totalPrice),
           street: dto.street,
