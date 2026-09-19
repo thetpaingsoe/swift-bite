@@ -59,6 +59,10 @@ Order status is event-driven: `pending` → `cooking` → `ready` → `dispatche
 via `orders_queue`, with user `cancelled` while pending. One checkout is one order
 with its own line items — see [database-schema.md](./docs/database-schema.md).
 
+## Preview
+
+![SwiftBite storefront](./docs/screenshots/screen-v0.1-1.png)
+
 ## API docs (Swagger)
 
 Each HTTP service serves interactive docs with bearer auth (Authorize button
