@@ -11,7 +11,18 @@
     },
     {
       "key": "token",
-      "value": ""
+      "value": "",
+      "description": "Paste an admin JWT here (login via auth-service as admin@swiftbite.local)"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "description": "Copy from GET /categories response"
+    },
+    {
+      "key": "itemId",
+      "value": "",
+      "description": "Copy from GET /items response"
     }
   ],
   "item": [

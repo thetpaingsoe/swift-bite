@@ -16,21 +16,21 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `88 / 94 items completed (94%)`
+**Overall:** `89 / 94 items completed (95%)`
 
 ```
 Phase 1 — Foundation       [██████████]  33/33  (100%)
 Phase 2 — Operations       [██████████]  20/20 (100%)
 Phase 3 — Observability    [██████████]  13/13 (100%)
 Phase 4 — Resilience       [░░░░░░░░░░]  0/20  (0%)
-Phase 5 — Organization     [░░░░░░░░░░]  0/8   (0%)
+Phase 5 — Organization     [█░░░░░░░░░]  1/8   (13%)
 Phase 6 — Frontend         [█████░░░░░]  5/8   (62%)
 Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 ```
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** Multi-line orders live (order_items table, tickets/dispatches carry lines JSON, one status per order verified end to end) | **Date:** 2026-09-12
+**Last action completed:** Docs round done (schema rewrite, README updates, orders Postman collection, 6 service READMEs) | **Date:** 2026-09-12
 
 ---
 
@@ -299,12 +299,13 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
   ```
 
 ### 5.5 Standardize READMEs
-- [ ] Replace NestJS boilerplate README with actual project documentation:
+- [x] Replaced NestJS boilerplate README with actual project documentation:
   - What the service does
   - Prerequisites (Node, pnpm, Docker)
   - Setup steps
   - Available scripts
   - Environment variables reference
+- [x] Created missing READMEs (auth-service, item-service, frontend)
 
 ---
 

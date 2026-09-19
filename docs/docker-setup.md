@@ -139,6 +139,9 @@ All 5 services self-register with Consul on startup (ID = service name + contain
 hostname) with HTTP health checks against their `/health` endpoints, and deregister on
 shutdown. Browse the registry at http://localhost:8500 (Services tab).
 
+See [service-discovery.md](./service-discovery.md) for how registration and
+discovery work under the hood.
+
 - `orders-service` discovers `item-service` dynamically via
   `GET consul:8500/v1/health/service/item-service?passing=1` (10s cache, random pick).
   If Consul is unreachable it falls back to `ITEM_SERVICE_URL` — directory outage

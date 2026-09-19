@@ -39,12 +39,12 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Password1!\"\n}"
+          "raw": "{\n  \"name\": \"Demo User\",\n  \"email\": \"demo@swiftbite.local\",\n  \"password\": \"Demo123!\"\n}"
         }
       }
     },
     {
-      "name": "POST /auth/login",
+      "name": "POST /auth/login (seeded customer)",
       "event": [
         {
           "listen": "test",
@@ -67,7 +67,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Password1!\"\n}"
+          "raw": "{\n  \"email\": \"customer@swiftbite.local\",\n  \"password\": \"Customer123!\"\n}"
         }
       }
     },

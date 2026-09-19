@@ -1,32 +1,36 @@
-# React + TypeScript + Vite
+# frontend — SwiftBite
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Vite + Tailwind v4 + Redux Toolkit + TanStack Query. Dev server on **5173**.
 
-Currently, two official plugins are available:
+## Routes
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Path | Access | Notes |
+|------|--------|-------|
+| `/` | public | menu with category tabs, guest cart |
+| `/cart` | public | quantities, totals |
+| `/checkout` | login | address form, single multi-line POST, confirmation |
+| `/confirmation` | login | order IDs |
+| `/orders` | login | history with status filter tabs, server paginated |
+| `/orders/:id` | login | lines, live status timeline (3s poll), cancel while pending |
+| `/login`, `/register` | guest | JWT in Redux + localStorage, 401 auto-logout |
+| `/admin` | admin | dashboard stats, menu management (categories, items) |
 
-## React Compiler
+State split: TanStack Query owns server data, Redux owns session, cart, and UI.
+Brand tokens live in `src/index.css` (`@theme`): `primary`, `primary-dark`,
+`primary-soft`, `paper`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Environment
 
-## Expanding the Oxlint configuration
+| Var | Notes |
+|-----|-------|
+| `VITE_AUTH_URL` | default `/api/auth`, proxied to :3000 in dev |
+| `VITE_ITEM_URL` | default `/api/items`, proxied to :3001 in dev |
+| `VITE_ORDERS_URL` | default `/api/orders`, proxied to :3002 in dev |
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Scripts
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+pnpm install
+pnpm dev      # local dev with API proxy, no CORS changes needed
+pnpm build    # typecheck + production bundle
 ```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.

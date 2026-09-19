@@ -45,7 +45,7 @@ NestJS 11 / TypeScript 5.7 strict / Drizzle ORM / Neon Postgres / RabbitMQ / Con
 | rabbitmq | — | 5672/15672 | ✅ |
 
 ## Current Task
-Phase 3 done (100%). Phase 6 — auth, menu, cart, checkout, tracking UI done and live-verified. Swagger live on 3 services. Next: 6.6 polish or Phase 4 resilience. See action-items.md (88/94).
+Phase 3 done, 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD). Next: 6.6 polish or Phase 4 resilience. See action-items.md (89/94).
 
 ## Conventions
 - Feature tests over unit tests (every change production-ready)

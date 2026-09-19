@@ -8,14 +8,17 @@ structured JSON logging with end-to-end correlation IDs.
 
 ```mermaid
 flowchart LR
-    FE[Frontend<br/>Phase 6] -->|HTTP + JWT| AUTH[auth-service<br/>:3000]
+    FE[Frontend<br/>:5173] -->|HTTP + JWT| AUTH[auth-service<br/>:3000]
     FE -->|HTTP| ITEM[item-service<br/>:3001]
     FE -->|HTTP + JWT| ORDERS[orders-service<br/>:3002]
-    ORDERS -->|HTTP: fetch item| ITEM
+    ORDERS -->|HTTP: fetch items| ITEM
     ORDERS -->|order_created| KQ[(kitchen_queue)]
     KQ --> KITCHEN[kitchen-service<br/>RMQ + health :3010]
     KITCHEN -->|order_ready| RQ[(rider_queue)]
     RQ --> RIDER[rider-service<br/>RMQ + health :3011]
+    KITCHEN -->|order_cooking<br/>order_ready| OQ[(orders_queue)]
+    RIDER -->|order_dispatched| OQ
+    OQ --> ORDERS
     ORDERS -.->|Consul lookup| CONSUL([Consul<br/>:8500])
     ITEM -.->|registers| CONSUL
 ```
@@ -23,15 +26,48 @@ flowchart LR
 One `correlationId` rides every order from `POST /orders` through all three
 databases and log streams — see [observability.md](./docs/observability.md).
 
+Order status is event-driven: `pending` → `cooking` → `ready` → `dispatched`
+via `orders_queue`, with user `cancelled` while pending. One checkout is one order
+with its own line items — see [database-schema.md](./docs/database-schema.md).
+
+## Frontend
+
+React + Vite + Tailwind + Redux Toolkit + TanStack Query in `frontend/`.
+Guest browsing, login at checkout, order tracking with live status polling,
+admin section with menu management.
+
+```bash
+cd main/frontend
+cp .env.example .env
+pnpm install
+pnpm dev   # http://localhost:5173, API proxied to :3000/:3001/:3002
+```
+
+## API docs (Swagger)
+
+Each HTTP service serves interactive docs with bearer auth (Authorize button
+takes a JWT from login):
+
+| Service | Docs |
+|---------|------|
+| auth-service | http://localhost:3000/api |
+| item-service | http://localhost:3001/api |
+| orders-service | http://localhost:3002/api |
+
+Key endpoints: `POST /auth/register`, `POST /auth/login`, `GET /categories`,
+`GET /items`, `POST /orders` (lines array), `GET /orders?page=&limit=&status=`,
+`GET /orders/:id`, `PATCH /orders/:id/cancel`.
+
 ## Services
 
 | Service | Database | Transport | Port | Owns |
 |---------|----------|-----------|------|------|
-| auth-service | auth_db | HTTP | 3000 | Users, JWT |
-| item-service | item_db | HTTP | 3001 | Menu items, categories |
-| orders-service | orders_db | HTTP + RMQ | 3002 | Orders |
-| kitchen-service | kitchen_db | RMQ (health :3010) | — | Tickets |
-| rider-service | rider_db | RMQ (health :3011) | — | Dispatches |
+| [auth-service](./auth-service/README.md) | auth_db | HTTP | 3000 | Users, JWT |
+| [item-service](./item-service/README.md) | item_db | HTTP | 3001 | Menu items, categories |
+| [orders-service](./orders-service/README.md) | orders_db | HTTP + RMQ | 3002 | Orders |
+| [kitchen-service](./kitchen-service/README.md) | kitchen_db | RMQ (health :3010) | — | Tickets |
+| [rider-service](./rider-service/README.md) | rider_db | RMQ (health :3011) | — | Dispatches |
+| [frontend](./frontend/README.md) | — | HTTP | 5173 | Storefront + admin UI |
 
 ## Documentation
 
@@ -42,6 +78,8 @@ databases and log streams — see [observability.md](./docs/observability.md).
 | [Docker Setup](./docs/docker-setup.md) | Docker Compose, running all services, troubleshooting |
 | [Test Setup](./docs/test-setup.md) | Test databases, .env.test, running tests |
 | [API Collections](./docs/api-collections/) | Postman API collections |
+| [API Docs (Swagger)](./docs/swagger.md) | Interactive docs, bearer auth flow |
+| [Service Discovery](./docs/service-discovery.md) | Consul setup, registration, discovery |
 | [Observability](./docs/observability.md) | JSON logging, correlation IDs, tracing an order |
 
 ## Quick Start
