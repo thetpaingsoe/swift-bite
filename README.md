@@ -1,8 +1,37 @@
 # SwiftBite
 
-Real-time food delivery on NestJS microservices — order → kitchen → rider.
-Neon Postgres per service, RabbitMQ events, Consul service discovery,
-structured JSON logging with end-to-end correlation IDs.
+Full-stack food delivery platform. React storefront and admin panel on a NestJS
+microservice backend. Orders flow through a real event pipeline: placed → cooked
+→ dispatched, with one correlation ID tracing every order across all services.
+
+## What is here
+
+**Frontend** (React + Vite + Tailwind + Redux Toolkit + TanStack Query)
+- Guest menu browsing with category tabs and client cart
+- Login and register with full password rules, JWT in Redux plus localStorage
+- Checkout with multi-line orders, order confirmation, and a floating cart bar
+- Order history with status filter tabs and server-side pagination
+- Order detail with live status polling and a progress timeline
+- Cancel pending orders
+- Admin panel: dashboard stats, category CRUD, item CRUD with image and availability
+- Role gating (admin vs customer), shared profile menu, responsive layout
+
+**Backend** (NestJS 11 microservices, one database each)
+- auth-service: register, login, verify, JWT carrying roles
+- item-service: categories and menu items, admin-guarded writes, decimal prices
+- orders-service: multi-line orders with line-item snapshots, paginated list,
+  event-driven status, pending-only cancellation
+- kitchen-service: RMQ consumer creating tickets, simulating cooking, emitting events
+- rider-service: RMQ consumer assigning riders and recording dispatches
+- RabbitMQ event flow with a status queue that advances orders without sync calls
+- Consul service discovery with healthy-instance filtering and static fallback
+- End-to-end correlation IDs, Pino structured JSON logs, Swagger docs per service
+- Graceful shutdown, liveness and readiness health checks
+
+**Infrastructure** (Docker Compose)
+- Five services plus RabbitMQ and Consul, one command to run
+- pnpm workspace, Neon Postgres per service with separate roles and migrations
+- Four seeded accounts: admin, kitchen, rider, customer
 
 ## Architecture
 
@@ -29,19 +58,6 @@ databases and log streams — see [observability.md](./docs/observability.md).
 Order status is event-driven: `pending` → `cooking` → `ready` → `dispatched`
 via `orders_queue`, with user `cancelled` while pending. One checkout is one order
 with its own line items — see [database-schema.md](./docs/database-schema.md).
-
-## Frontend
-
-React + Vite + Tailwind + Redux Toolkit + TanStack Query in `frontend/`.
-Guest browsing, login at checkout, order tracking with live status polling,
-admin section with menu management.
-
-```bash
-cd main/frontend
-cp .env.example .env
-pnpm install
-pnpm dev   # http://localhost:5173, API proxied to :3000/:3001/:3002
-```
 
 ## API docs (Swagger)
 
@@ -110,6 +126,15 @@ Seeded logins (passwords pass the backend rule):
 | kitchen@swiftbite.local | Kitchen123! | kitchen |
 | rider@swiftbite.local | Rider123! | rider |
 | customer@swiftbite.local | Customer123! | customer |
+
+### Frontend
+
+```bash
+cd main/frontend
+cp .env.example .env
+pnpm install
+pnpm dev   # http://localhost:5173, API proxied to :3000/:3001/:3002
+```
 
 ## Testing
 
