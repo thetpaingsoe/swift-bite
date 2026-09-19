@@ -5,6 +5,7 @@ const ITEM_URL = import.meta.env.VITE_ITEM_URL ?? "/api/items";
 export interface Category {
   id: string;
   name: string;
+  createdAt: string;
 }
 
 export interface MenuItem {
@@ -19,6 +20,12 @@ export interface MenuItem {
 
 export function listCategories() {
   return apiFetch(`${ITEM_URL}/categories`) as Promise<Category[]>;
+}
+
+export function deleteCategory(id: string) {
+  return apiFetch(`${ITEM_URL}/categories/${id}`, {
+    method: "DELETE",
+  }) as Promise<{ message: string }>;
 }
 
 export function listItems(categoryId?: string) {
