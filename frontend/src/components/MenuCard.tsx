@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { UtensilsCrossed } from "lucide-react";
+import { Plus, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import type { MenuItem } from "../api/items";
 import { addLine } from "../store/cart-slice";
 import { useAppDispatch } from "../store/store";
-import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 
 export function MenuCard({ item }: { item: MenuItem }) {
@@ -43,13 +42,18 @@ export function MenuCard({ item }: { item: MenuItem }) {
           <span className="shrink-0 font-semibold text-stone-900">${item.price}</span>
         </div>
         <p className="mt-1 line-clamp-2 text-sm text-stone-500">{item.description}</p>
-        <Button
-          className="mt-3 w-full"
-          disabled={!item.available}
-          onClick={add}
-        >
-          {item.available ? "Add to cart" : "Unavailable"}
-        </Button>
+        <div className="mt-3 flex justify-end">
+          <button
+            className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-dark disabled:cursor-default disabled:opacity-50"
+            disabled={!item.available}
+            onClick={add}
+          >
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white">
+              <Plus className="h-3.5 w-3.5" strokeWidth={3} />
+            </span>
+            {item.available ? "Add to Cart" : "Unavailable"}
+          </button>
+        </div>
       </div>
     </Card>
   );
