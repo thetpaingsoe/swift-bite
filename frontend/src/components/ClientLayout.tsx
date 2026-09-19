@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { clearSession } from "../store/auth-slice";
 import { Button } from "./ui/button";
+import { BrandLogo } from "./BrandLogo";
 import { CartModal } from "./CartModal";
 import { CheckoutButton } from "./CheckoutButton";
 import { cn } from "../lib/cn";
@@ -33,8 +34,8 @@ export function ClientLayout() {
     <div className="min-h-screen bg-stone-50">
       <header className="border-b border-stone-200 bg-white">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-          <Link to="/" className="text-lg font-semibold tracking-tight text-stone-900">
-            SwiftBite
+          <Link to="/" className="text-lg">
+            <BrandLogo />
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             <Link to="/" className="text-stone-600 hover:text-stone-900">

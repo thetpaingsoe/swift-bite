@@ -7,6 +7,7 @@ import { login } from "../api/auth";
 import { setSession } from "../store/auth-slice";
 import { useAppDispatch } from "../store/store";
 import { Button } from "../components/ui/button";
+import { BrandLogo } from "../components/BrandLogo";
 import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 
@@ -47,8 +48,10 @@ export function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
       <Card className="w-full max-w-sm p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-stone-900">SwiftBite</h1>
-        <p className="mt-1 text-sm text-stone-500">Log in to order food.</p>
+        <div className="text-2xl">
+          <BrandLogo />
+        </div>
+        <p className="mt-1 text-sm text-stone-500">Welcome back. Log in to order from your favorite spots and track delivery live.</p>
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
           <div>
             <Input type="email" placeholder="Email" autoComplete="email" {...register("email")} />

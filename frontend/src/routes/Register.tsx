@@ -7,6 +7,7 @@ import { register } from "../api/auth";
 import { setSession } from "../store/auth-slice";
 import { useAppDispatch } from "../store/store";
 import { Button } from "../components/ui/button";
+import { BrandLogo } from "../components/BrandLogo";
 import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 
@@ -51,8 +52,10 @@ export function Register() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
       <Card className="w-full max-w-sm p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-stone-900">SwiftBite</h1>
-        <p className="mt-1 text-sm text-stone-500">Create an account to order food.</p>
+        <div className="text-2xl">
+          <BrandLogo />
+        </div>
+        <p className="mt-1 text-sm text-stone-500">Join SwiftBite to order in seconds, save your addresses, and follow every delivery.</p>
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
           <div>
             <Input placeholder="Name" autoComplete="name" {...field("name")} />

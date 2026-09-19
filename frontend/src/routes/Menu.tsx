@@ -19,7 +19,7 @@ export function Menu() {
   return (
     <div>
       <h1 className="text-2xl font-semibold tracking-tight text-stone-900">Menu</h1>
-      <p className="mt-1 text-sm text-stone-500">Browse and add to cart, no account needed.</p>
+      <p className="mt-1 text-sm text-stone-500">Fresh from local kitchens. Fill your cart and check out whenever you're ready.</p>
 
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
         <button

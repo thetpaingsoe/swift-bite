@@ -3,6 +3,7 @@ import { LayoutDashboard, Package, Receipt, Tags } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { clearSession } from "../store/auth-slice";
 import { Button } from "./ui/button";
+import { BrandLogo } from "./BrandLogo";
 import { cn } from "../lib/cn";
 
 const links = [
@@ -26,8 +27,8 @@ export function AdminLayout() {
     <div className="flex min-h-screen bg-stone-50">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-stone-200 bg-white md:flex">
         <div className="flex h-16 items-center border-b border-stone-200 px-5">
-          <Link to="/admin" className="text-lg font-semibold tracking-tight text-stone-900">
-            SwiftBite Admin
+          <Link to="/admin" className="text-lg">
+            <BrandLogo suffix="Admin" />
           </Link>
         </div>
         <nav className="flex-1 space-y-1 p-3">
@@ -68,8 +69,8 @@ export function AdminLayout() {
 
       <div className="min-w-0 flex-1">
         <header className="flex h-16 items-center justify-between border-b border-stone-200 bg-white px-4 md:hidden">
-          <Link to="/admin" className="text-lg font-semibold tracking-tight text-stone-900">
-            SwiftBite Admin
+          <Link to="/admin" className="text-lg">
+            <BrandLogo suffix="Admin" />
           </Link>
           <Button variant="outline" size="md" onClick={logout}>
             Log out
