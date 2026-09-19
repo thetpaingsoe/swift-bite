@@ -2,8 +2,8 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Package, Receipt, Tags } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { clearSession } from "../store/auth-slice";
-import { Button } from "./ui/button";
 import { BrandLogo } from "./BrandLogo";
+import { ProfileMenu } from "./ProfileMenu";
 import { cn } from "../lib/cn";
 
 const links = [
@@ -52,29 +52,23 @@ export function AdminLayout() {
           ))}
         </nav>
         <div className="border-t border-stone-200 p-3">
-          <Link
-            to="/"
-            className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900"
-          >
-            Storefront
-          </Link>
-          <div className="mt-2 flex items-center justify-between rounded-xl px-3 py-2">
+          <div className="rounded-xl px-3 py-2">
             <span className="truncate text-sm text-stone-500">{user?.name}</span>
-            <Button variant="outline" size="md" onClick={logout}>
-              Log out
-            </Button>
           </div>
         </div>
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="flex h-16 items-center justify-between border-b border-stone-200 bg-white px-4 md:hidden">
-          <Link to="/admin" className="text-lg">
+        <header className="flex h-16 items-center justify-between border-b border-stone-200 bg-white px-4 sm:px-8">
+          <Link to="/admin" className="text-lg md:hidden">
             <BrandLogo suffix="Admin" />
           </Link>
-          <Button variant="outline" size="md" onClick={logout}>
-            Log out
-          </Button>
+          <div className="ml-auto flex items-center gap-4">
+            <Link to="/" className="text-sm font-semibold tracking-wide text-stone-600 hover:text-stone-900">
+              STOREFRONT
+            </Link>
+            {user && <ProfileMenu user={user} onLogout={logout} showAdminLink={false} />}
+          </div>
         </header>
         <nav className="flex gap-2 overflow-x-auto border-b border-stone-200 bg-white px-4 py-2 md:hidden">
           {links.map((link) => (

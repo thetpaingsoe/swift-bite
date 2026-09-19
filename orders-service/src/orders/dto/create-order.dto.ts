@@ -1,11 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsString, IsUUID, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsInt,
+  IsString,
+  IsUUID,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
-export class CreateOrderDto {
-  @ApiProperty({ example: 'John Doe' })
-  @IsString()
-  customerName!: string;
-
+export class OrderLineDto {
   @ApiProperty({ example: '48c654f1-1317-48bc-98ad-e0ea20263c1c' })
   @IsUUID()
   menuItemId!: string;
@@ -14,6 +19,19 @@ export class CreateOrderDto {
   @IsInt()
   @Min(1)
   quantity!: number;
+}
+
+export class CreateOrderDto {
+  @ApiProperty({ example: 'John Doe' })
+  @IsString()
+  customerName!: string;
+
+  @ApiProperty({ type: [OrderLineDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => OrderLineDto)
+  lines!: OrderLineDto[];
 
   @ApiProperty({ example: '123 Main St' })
   @IsString()

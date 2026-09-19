@@ -18,6 +18,7 @@ import { Login } from "./routes/Login";
 import { Menu } from "./routes/Menu";
 import { OrderDetail } from "./routes/OrderDetail";
 import { Orders } from "./routes/Orders";
+import { Profile } from "./routes/Profile";
 import { Register } from "./routes/Register";
 import { useAppSelector } from "./store/store";
 
@@ -44,6 +45,14 @@ export default function App() {
       <Route path="/" element={<ClientLayout />}>
         <Route index element={<Menu />} />
         <Route path="cart" element={<Cart />} />
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="checkout"
           element={

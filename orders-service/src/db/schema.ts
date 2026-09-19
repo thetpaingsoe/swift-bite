@@ -11,10 +11,6 @@ export const orders = pgTable('orders', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id'),
   customerName: varchar('customer_name', { length: 100 }).notNull(),
-  menuItemId: uuid('menu_item_id').notNull(),
-  itemName: varchar('item_name', { length: 255 }).notNull(),
-  itemPrice: numeric('item_price').notNull(),
-  quantity: integer('quantity').notNull(),
   totalPrice: numeric('total_price').notNull(),
   street: varchar('street', { length: 255 }).notNull(),
   area: varchar('area', { length: 255 }).notNull(),
@@ -23,5 +19,18 @@ export const orders = pgTable('orders', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+export const orderItems = pgTable('order_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orderId: uuid('order_id')
+    .notNull()
+    .references(() => orders.id, { onDelete: 'cascade' }),
+  menuItemId: uuid('menu_item_id').notNull(),
+  itemName: varchar('item_name', { length: 255 }).notNull(),
+  itemPrice: numeric('item_price').notNull(),
+  quantity: integer('quantity').notNull(),
+});
+
 export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
+export type OrderItem = typeof orderItems.$inferSelect;
+export type NewOrderItem = typeof orderItems.$inferInsert;

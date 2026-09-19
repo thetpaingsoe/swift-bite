@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 import { DbService } from '../db/db.service';
-import { dispatches } from '../db/schema';
+import { dispatches, type DispatchLine } from '../db/schema';
 
 const RIDERS = ['Mike', 'Alex', 'Joe', 'Bright'];
 @Injectable()
@@ -17,8 +17,7 @@ export class AppService {
   async dispatchRider(data: {
     orderId: string;
     customerName: string;
-    itemName: string;
-    quantity: number;
+    lines: DispatchLine[];
     street: string;
     area: string;
     correlationId: string;
@@ -32,8 +31,7 @@ export class AppService {
         .values({
           orderId: data.orderId,
           customerName: data.customerName,
-          itemName: data.itemName,
-          quantity: data.quantity,
+          items: data.lines,
           street: data.street,
           area: data.area,
           riderStatus: 'dispatched',
@@ -49,9 +47,10 @@ export class AppService {
     }
 
     this.logger.log('dispatched save with ID : ', dispatch.orderId);
-    this.logger.log(
-      rider + ' is on the way with your item ' + dispatch.itemName,
-    );
+    const summary = data.lines
+      .map((line) => `${line.quantity}x ${line.itemName}`)
+      .join(', ');
+    this.logger.log(rider + ' is on the way with ' + summary);
 
     try {
       await firstValueFrom(

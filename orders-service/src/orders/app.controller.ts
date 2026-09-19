@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Req, UseGuards, Logger } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards, Logger } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import {
   ApiBearerAuth,
@@ -8,6 +8,7 @@ import {
 import { AppService } from './app.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { ListOrdersDto } from './dto/list-orders.dto';
 import {
   correlationStorage,
   resolveCorrelationId,
@@ -32,10 +33,16 @@ export class AppController {
 
   @Get()
   @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'List my orders (admin sees all)' })
-  @ApiResponse({ status: 200, description: 'Order list' })
-  async listOrders(@Req() req: any) {
-    return this.appService.listOrders(req.user?.userId, req.user?.role);
+  @ApiOperation({ summary: 'List my orders, paginated (admin sees all)' })
+  @ApiResponse({ status: 200, description: 'Order page with meta' })
+  async listOrders(@Query() query: ListOrdersDto, @Req() req: any) {
+    return this.appService.listOrders(
+      req.user?.userId,
+      req.user?.role,
+      query.page ?? 1,
+      query.limit ?? 10,
+      query.status,
+    );
   }
 
   @Get(':id')

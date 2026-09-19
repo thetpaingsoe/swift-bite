@@ -30,7 +30,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** Swagger live on auth/item/orders with bearer auth (fixed pnpm dual-Nest boot crash via nodeLinker hoisted) | **Date:** 2026-09-12
+**Last action completed:** Multi-line orders live (order_items table, tickets/dispatches carry lines JSON, one status per order verified end to end) | **Date:** 2026-09-12
 
 ---
 

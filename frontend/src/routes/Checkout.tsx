@@ -40,19 +40,17 @@ export function Checkout() {
   async function onSubmit(values: FormValues) {
     setPlacing(true);
     try {
-      const orderIds: string[] = [];
-      for (const line of lines) {
-        const res = await placeOrder({
-          customerName: values.customerName,
+      const res = await placeOrder({
+        customerName: values.customerName,
+        street: values.street,
+        area: values.area,
+        lines: lines.map((line) => ({
           menuItemId: line.menuItemId,
           quantity: line.quantity,
-          street: values.street,
-          area: values.area,
-        });
-        orderIds.push(res.orderId);
-      }
+        })),
+      });
       dispatch(clearCart());
-      navigate("/confirmation", { state: { orderIds } });
+      navigate("/confirmation", { state: { orderIds: [res.orderId] } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Order failed");
     } finally {

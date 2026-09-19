@@ -9,8 +9,8 @@ import {
 import { HttpService } from '@nestjs/axios';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
-import { desc, eq } from 'drizzle-orm';
-import { orders } from '../db/schema';
+import { and, count, desc, eq } from 'drizzle-orm';
+import { orderItems, orders, type Order } from '../db/schema';
 import { DbService } from '../db/db.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { DiscoveryService } from '../consul/discovery.service';
@@ -39,25 +39,32 @@ export class AppService {
   ) {}
 
   async createOrder(dto: CreateOrderDto, userId?: string) {
-    const item = await this.fetchItem(dto.menuItemId);
+    const lines = await Promise.all(
+      dto.lines.map(async (line) => {
+        const item = await this.fetchItem(line.menuItemId);
+        const unitPrice = Number(item.price);
+        return {
+          menuItemId: line.menuItemId,
+          itemName: item.name,
+          itemPrice: String(unitPrice),
+          quantity: line.quantity,
+          lineTotal: unitPrice * line.quantity,
+        };
+      }),
+    );
 
-    const unitPrice = Number(item.price);
-    const totalPrice = unitPrice * dto.quantity;
+    const totalPrice = lines.reduce((sum, line) => sum + line.lineTotal, 0);
     const { correlationId } = resolveCorrelationId(
       correlationStorage.getStore()?.correlationId,
     );
 
-    let order;
+    let order!: Order;
     try {
       [order] = await this.dbService.db
         .insert(orders)
         .values({
           userId: userId ?? null,
           customerName: dto.customerName,
-          menuItemId: dto.menuItemId,
-          itemName: item.name,
-          itemPrice: String(unitPrice),
-          quantity: dto.quantity,
           totalPrice: String(totalPrice),
           street: dto.street,
           area: dto.area,
@@ -65,12 +72,21 @@ export class AppService {
           correlationId,
         })
         .returning();
+
+      await this.dbService.db.insert(orderItems).values(
+        lines.map(({ lineTotal, ...line }) => ({
+          ...line,
+          orderId: order.id,
+        })),
+      );
     } catch (error) {
       this.logger.error('Failed to persist order', error as Error);
       throw new BadGatewayException('Could not save the order');
     }
 
-    this.logger.log(`Order saved to DB: ${order.id}`);
+    this.logger.log(
+      `Order saved to DB: ${order.id} (${lines.length} lines)`,
+    );
 
     try {
       await firstValueFrom(
@@ -78,8 +94,11 @@ export class AppService {
           .emit('order_created', {
             orderId: order.id,
             customerName: order.customerName,
-            itemName: order.itemName,
-            quantity: order.quantity,
+            lines: lines.map(({ menuItemId, itemName, quantity }) => ({
+              menuItemId,
+              itemName,
+              quantity,
+            })),
             street: order.street,
             area: order.area,
             correlationId,
@@ -97,18 +116,49 @@ export class AppService {
     return { success: true, orderId: order.id };
   }
 
-  async listOrders(userId?: string, role?: string) {
-    if (role === 'admin') {
-      return this.dbService.db
-        .select()
-        .from(orders)
-        .orderBy(desc(orders.createdAt));
+  async listOrders(
+    userId?: string,
+    role?: string,
+    page = 1,
+    limit = 10,
+    status?: string,
+  ) {
+    const conditions = [];
+    if (role !== 'admin') {
+      conditions.push(eq(orders.userId, userId ?? ''));
     }
-    return this.dbService.db
+    if (status) {
+      conditions.push(eq(orders.status, status));
+    }
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [{ total }] = await this.dbService.db
+      .select({ total: count() })
+      .from(orders)
+      .where(where);
+
+    const rows = await this.dbService.db
       .select()
       .from(orders)
-      .where(eq(orders.userId, userId ?? ''))
-      .orderBy(desc(orders.createdAt));
+      .where(where)
+      .orderBy(desc(orders.createdAt))
+      .limit(limit)
+      .offset((page - 1) * limit);
+
+    const data = await Promise.all(
+      rows.map(async (order) => ({
+        ...order,
+        lines: await this.dbService.db
+          .select()
+          .from(orderItems)
+          .where(eq(orderItems.orderId, order.id)),
+      })),
+    );
+
+    return {
+      data,
+      meta: { total, page, limit, pageCount: Math.ceil(total / limit) },
+    };
   }
 
   async getOrder(id: string, userId?: string, role?: string) {
@@ -122,7 +172,12 @@ export class AppService {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
 
-    return order;
+    const lines = await this.dbService.db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, order.id));
+
+    return { ...order, lines };
   }
 
   async updateStatus(orderId: string, status: string) {

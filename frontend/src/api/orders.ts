@@ -2,12 +2,16 @@ import { apiFetch } from "./client";
 
 const ORDERS_URL = import.meta.env.VITE_ORDERS_URL ?? "/api/orders";
 
-export interface PlaceOrderInput {
-  customerName: string;
+export interface PlaceOrderLine {
   menuItemId: string;
   quantity: number;
+}
+
+export interface PlaceOrderInput {
+  customerName: string;
   street: string;
   area: string;
+  lines: PlaceOrderLine[];
 }
 
 export function placeOrder(input: PlaceOrderInput) {
@@ -17,22 +21,34 @@ export function placeOrder(input: PlaceOrderInput) {
   }) as Promise<{ success: boolean; orderId: string }>;
 }
 
-export interface Order {
+export interface OrderLine {
   id: string;
-  customerName: string;
   menuItemId: string;
   itemName: string;
   itemPrice: string;
   quantity: number;
+}
+
+export interface Order {
+  id: string;
+  customerName: string;
   totalPrice: string;
   street: string;
   area: string;
   status: string;
   createdAt: string;
+  lines: OrderLine[];
 }
 
-export function listOrders() {
-  return apiFetch(`${ORDERS_URL}/orders`) as Promise<Order[]>;
+export interface OrderPage {
+  data: Order[];
+  meta: { total: number; page: number; limit: number; pageCount: number };
+}
+
+export function listOrders(page = 1, limit = 10, status?: string) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (status) params.set("status", status);
+  return apiFetch(`${ORDERS_URL}/orders?${params}`) as Promise<OrderPage>;
 }
 
 export function getOrder(id: string) {

@@ -2,16 +2,21 @@ import {
   pgTable,
   uuid,
   varchar,
-  integer,
+  jsonb,
   timestamp,
 } from 'drizzle-orm/pg-core';
+
+export interface DispatchLine {
+  menuItemId?: string;
+  itemName: string;
+  quantity: number;
+}
 
 export const dispatches = pgTable('dispatches', {
   id: uuid('id').defaultRandom().primaryKey(),
   orderId: uuid('order_id').notNull(),
   customerName: varchar('customer_name', { length: 100 }).notNull(),
-  itemName: varchar('item_name', { length: 255 }).notNull(),
-  quantity: integer('quantity').notNull(),
+  items: jsonb('items').$type<DispatchLine[]>().notNull(),
   street: varchar('street', { length: 255 }).notNull(),
   area: varchar('area', { length: 255 }).notNull(),
   riderStatus: varchar('status', { length: 50 })

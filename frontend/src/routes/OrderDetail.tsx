@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { cancelOrder, getOrder } from "../api/orders";
-import { StatusBadge, StatusTimeline } from "../components/OrderStatus";
+import { StatusText, StatusTimeline } from "../components/OrderStatus";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 
@@ -42,6 +42,8 @@ export function OrderDetail() {
   if (isError || !order)
     return <p className="mt-6 text-sm text-red-600">Could not load this order.</p>;
 
+  const itemCount = order.lines.reduce((sum, line) => sum + line.quantity, 0);
+
   return (
     <div>
       <Link to="/orders" className="text-sm text-stone-500 underline">
@@ -49,12 +51,27 @@ export function OrderDetail() {
       </Link>
       <div className="mt-2 flex items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
-          {order.itemName} × {order.quantity}
+          Order · {itemCount} {itemCount === 1 ? "item" : "items"}
         </h1>
-        <StatusBadge status={order.status} />
+        <StatusText status={order.status} />
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <Card className="p-6">
+          <h2 className="font-medium text-stone-900">Items</h2>
+          <ul className="mt-4 space-y-3">
+            {order.lines.map((line) => (
+              <li key={line.id} className="flex items-center justify-between text-sm">
+                <span className="text-stone-900">
+                  {line.itemName} <span className="text-stone-400">× {line.quantity}</span>
+                </span>
+                <span className="font-medium text-stone-900">
+                  ${Number(line.itemPrice) * line.quantity}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
         <Card className="p-6">
           <h2 className="font-medium text-stone-900">Progress</h2>
           <div className="mt-4">
@@ -64,7 +81,7 @@ export function OrderDetail() {
             <p className="mt-4 text-xs text-stone-400">Updating live…</p>
           )}
         </Card>
-        <Card className="p-6">
+        <Card className="p-6 md:col-span-2">
           <h2 className="font-medium text-stone-900">Details</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between">

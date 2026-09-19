@@ -27,9 +27,17 @@ function StatCard({
 export function AdminDashboard() {
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: listCategories });
   const itemsQuery = useQuery({ queryKey: ["items", "all"], queryFn: () => listItems() });
-  const ordersQuery = useQuery({ queryKey: ["orders"], queryFn: listOrders });
+  const ordersQuery = useQuery({
+    queryKey: ["orders", 1, "pending"],
+    queryFn: () => listOrders(1, 1, "pending"),
+  });
+  const totalsQuery = useQuery({
+    queryKey: ["orders", "totals"],
+    queryFn: () => listOrders(1, 1),
+  });
 
-  const pendingCount = ordersQuery.data?.filter((o) => o.status === "pending").length ?? 0;
+  const pendingCount = ordersQuery.data?.meta.total ?? 0;
+  const totalCount = totalsQuery.data?.meta.total ?? 0;
   const failed = categoriesQuery.isError || itemsQuery.isError || ordersQuery.isError;
 
   return (
@@ -56,8 +64,8 @@ export function AdminDashboard() {
         />
         <StatCard
           label="Total orders"
-          value={ordersQuery.data?.length ?? 0}
-          loading={ordersQuery.isPending}
+          value={totalCount}
+          loading={totalsQuery.isPending}
         />
         <StatCard
           label="Pending orders"

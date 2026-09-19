@@ -1,12 +1,12 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingBag } from "lucide-react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Receipt, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { clearSession } from "../store/auth-slice";
-import { Button } from "./ui/button";
 import { BrandLogo } from "./BrandLogo";
 import { CartModal } from "./CartModal";
 import { CheckoutButton } from "./CheckoutButton";
+import { ProfileMenu } from "./ProfileMenu";
 import { cn } from "../lib/cn";
 
 export function ClientLayout() {
@@ -38,31 +38,41 @@ export function ClientLayout() {
             <BrandLogo />
           </Link>
           <nav className="flex items-center gap-4 text-sm">
-            <Link to="/" className="text-stone-600 hover:text-stone-900">
-              Menu
-            </Link>
-            <Link to="/cart" className="text-stone-600 hover:text-stone-900">
-              Cart{cartCount > 0 ? ` (${cartCount})` : ""}
-            </Link>
+            <NavLink
+              to="/cart"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-1.5 text-sm font-semibold tracking-wide",
+                  isActive ? "text-primary" : "text-stone-600 hover:text-primary",
+                )
+              }
+            >
+              <ShoppingBag className="h-4 w-4" />
+              CART
+              {cartCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-white">
+                  {cartCount}
+                </span>
+              )}
+            </NavLink>
             {user && (
-              <Link to="/orders" className="text-stone-600 hover:text-stone-900">
-                Orders
-              </Link>
-            )}
-            {user?.role === "admin" && (
-              <Link to="/admin" className="text-stone-600 hover:text-stone-900">
-                Admin
-              </Link>
+              <NavLink
+                to="/orders"
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-1.5 text-sm font-semibold tracking-wide",
+                    isActive ? "text-primary" : "text-stone-600 hover:text-primary",
+                  )
+                }
+              >
+                <Receipt className="h-4 w-4" />
+                ORDERS
+              </NavLink>
             )}
             {user ? (
-              <>
-                <span className="text-stone-400">{user.name}</span>
-                <Button variant="outline" size="md" onClick={logout}>
-                  Log out
-                </Button>
-              </>
+              <ProfileMenu user={user} onLogout={logout} />
             ) : (
-              <Link to="/login" className="text-stone-600 hover:text-stone-900">
+              <Link to="/login" className="font-semibold text-stone-600 hover:text-stone-900">
                 Log in
               </Link>
             )}

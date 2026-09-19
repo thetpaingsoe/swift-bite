@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 import { DbService } from '../db/db.service';
-import { tickets } from '../db/schema';
+import { tickets, type TicketLine } from '../db/schema';
 
 @Injectable()
 export class AppService {
@@ -17,8 +17,7 @@ export class AppService {
   async processOrder(data: {
     orderId: string;
     customerName: string;
-    itemName: string;
-    quantity: number;
+    lines: TicketLine[];
     street: string;
     area: string;
     correlationId: string;
@@ -30,8 +29,7 @@ export class AppService {
         .values({
           orderId: data.orderId,
           customerName: data.customerName,
-          itemName: data.itemName,
-          quantity: data.quantity,
+          items: data.lines,
           street: data.street,
           area: data.area,
           status: 'received',
@@ -58,8 +56,7 @@ export class AppService {
           .emit('order_ready', {
             orderId: data.orderId,
             customerName: data.customerName,
-            itemName: data.itemName,
-            quantity: data.quantity,
+            lines: data.lines,
             street: data.street,
             area: data.area,
             correlationId: data.correlationId,

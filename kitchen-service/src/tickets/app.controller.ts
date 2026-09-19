@@ -5,6 +5,7 @@ import {
   correlationStorage,
   resolveCorrelationId,
 } from '../correlation/correlation.storage';
+import type { TicketLine } from '../db/schema';
 
 @Controller()
 export class AppController {
@@ -18,8 +19,7 @@ export class AppController {
     data: {
       orderId: string;
       customerName: string;
-      itemName: string;
-      quantity: number;
+      lines: TicketLine[];
       street: string;
       area: string;
       correlationId?: string;
