@@ -13,3 +13,7 @@
 body {
   background-color: var(--color-paper);
 }
+
+html {
+  scrollbar-gutter: stable;
+}
