@@ -30,7 +30,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** Docs round done (schema rewrite, README updates, orders Postman collection, 6 service READMEs) | **Date:** 2026-09-12
+**Last action completed:** Kitchen approval workflow (hybrid kitchen-service HTTP :3012 + guard, tickets accept/complete/reject, order_failed saga to cancel, /kitchen board) live-verified | **Date:** 2026-09-12
 
 ---
 

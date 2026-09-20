@@ -85,6 +85,13 @@ export class AppController {
     await this.applyStatus(data, 'dispatched');
   }
 
+  @EventPattern('order_failed')
+  async handleOrderFailed(
+    @Payload() data: { orderId: string; correlationId?: string },
+  ) {
+    await this.applyStatus(data, 'cancelled');
+  }
+
   private async applyStatus(
     data: { orderId: string; correlationId?: string },
     status: string,

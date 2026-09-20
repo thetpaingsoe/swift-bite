@@ -22,6 +22,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/orders/, ''),
       },
+      '/api/kitchen': {
+        target: 'http://localhost:3012',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/kitchen/, ''),
+      },
     },
   },
 })

@@ -1,13 +1,14 @@
 # API Docs (Swagger)
 
-Every HTTP service serves interactive OpenAPI docs at `/api`. Kitchen and rider
-are RabbitMQ consumers with no HTTP API, so they have none.
+Every HTTP service serves interactive OpenAPI docs at `/api`. Rider is a
+RabbitMQ consumer with no HTTP API, so it has none.
 
 | Service | Docs | Endpoints |
 |---------|------|-----------|
 | auth-service | http://localhost:3000/api | register, login, verify |
 | item-service | http://localhost:3001/api | categories, items |
 | orders-service | http://localhost:3002/api | place, list, get, cancel |
+| kitchen-service | http://localhost:3012/api | list tickets, accept, complete, reject |
 
 ## What you get
 

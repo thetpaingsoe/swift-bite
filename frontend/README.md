@@ -14,6 +14,7 @@ React + Vite + Tailwind v4 + Redux Toolkit + TanStack Query. Dev server on **517
 | `/orders/:id` | login | lines, live status timeline (3s poll), cancel while pending |
 | `/login`, `/register` | guest | JWT in Redux + localStorage, 401 auto-logout |
 | `/admin` | admin | dashboard stats, menu management (categories, items) |
+| `/kitchen` | kitchen | ticket queue: accept, complete, reject |
 
 State split: TanStack Query owns server data, Redux owns session, cart, and UI.
 Brand tokens live in `src/index.css` (`@theme`): `primary`, `primary-dark`,
@@ -26,6 +27,7 @@ Brand tokens live in `src/index.css` (`@theme`): `primary`, `primary-dark`,
 | `VITE_AUTH_URL` | default `/api/auth`, proxied to :3000 in dev |
 | `VITE_ITEM_URL` | default `/api/items`, proxied to :3001 in dev |
 | `VITE_ORDERS_URL` | default `/api/orders`, proxied to :3002 in dev |
+| `VITE_KITCHEN_URL` | default `/api/kitchen`, proxied to :3012 in dev |
 
 ## Scripts
 

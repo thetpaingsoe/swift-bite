@@ -39,13 +39,13 @@ NestJS 11 / TypeScript 5.7 strict / Drizzle ORM / Neon Postgres / RabbitMQ / Con
 | auth-service | auth_db | 3000 | ✅ Done (health, Consul, Pino, correlation honor, strict) |
 | item-service | item_db | 3001 | ✅ Done (health, Consul, Pino, correlation honor, strict) |
 | orders-service | orders_db | 3002 | ✅ Done (+ Consul discovery w/ fallback, correlation middleware + persist) |
-| kitchen-service | kitchen_db | RMQ + health :3010 | ✅ Done (+ Consul, Pino, correlation forward + persist) |
+| kitchen-service | kitchen_db | HTTP :3012 + RMQ | ✅ Done (+ hybrid HTTP API, KitchenGuard, ticket accept/complete/reject) |
 | rider-service | rider_db | RMQ + health :3011 | ✅ Done (+ Consul, Pino, correlation persist) |
 | consul | — | 8500/8600 | ✅ Dev agent in compose |
 | rabbitmq | — | 5672/15672 | ✅ |
 
 ## Current Task
-Phase 3 done, 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD). Next: 6.6 polish or Phase 4 resilience. See action-items.md (89/94).
+Phase 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD) plus kitchen board (/kitchen, hybrid kitchen-service :3012, accept/complete/reject). Next: 6.6 polish or Phase 4 resilience. See action-items.md (89/94).
 
 ## Conventions
 - Feature tests over unit tests (every change production-ready)

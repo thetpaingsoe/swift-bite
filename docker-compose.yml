@@ -97,18 +97,22 @@ services:
     build: ./kitchen-service
     container_name: kitchen-service
     ports:
-      - '3010:3010'
+      - '3012:3012'
     environment:
       DATABASE_URL: ${KITCHEN_DATABASE_URL}
+      PORT: 3012
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-      HEALTH_PORT: 3010
+      AUTH_SERVICE_URL: http://auth-service:3000
       CONSUL_URL: http://consul:8500
+      SERVICE_PORT: 3012
       NODE_ENV: production
     depends_on:
       rabbitmq:
         condition: service_healthy
+      auth-service:
+        condition: service_healthy
     healthcheck:
-      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3010/health']
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3012/health']
       interval: 10s
       timeout: 5s
       retries: 5

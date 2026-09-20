@@ -89,12 +89,14 @@ user-cancelled state. Late events never revive a cancelled order.
 | `items` | jsonb | not null, array of `{ menuItemId?, itemName, quantity }` snapshots |
 | `street` | varchar(255) | not null |
 | `area` | varchar(255) | not null |
-| `status` | varchar(50) | not null, default `received` |
+| `status` | varchar(50) | not null, default `received`; one of `received`, `cooking`, `ready`, `rejected` |
 | `correlation_id` | varchar(36) | nullable, forwarded from `order_created` |
 | `created_at` | timestamptz | default now() |
 
-Line snapshots live as JSON because tickets are write-once, read-whole. Legacy rows
-carry items without `menuItemId`.
+Ticket status is driven by kitchen staff: `received` → `cooking` (accept) →
+`ready` (complete), or `rejected` (cancel the order). Line snapshots live as JSON
+because tickets are write-once, read-whole. Legacy rows carry items without
+`menuItemId`.
 
 ## rider-service — `dispatches`
 

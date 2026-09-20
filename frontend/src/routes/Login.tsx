@@ -39,7 +39,9 @@ export function Login() {
       );
       toast.success(`Welcome back, ${res.name}`);
       const from = (location.state as { from?: string } | null)?.from;
-      navigate(from ?? (res.role === "admin" ? "/admin" : "/"), { replace: true });
+      const home =
+        res.role === "admin" ? "/admin" : res.role === "kitchen" ? "/kitchen" : "/";
+      navigate(from ?? home, { replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
     }

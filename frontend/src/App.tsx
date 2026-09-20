@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AdminLayout } from "./components/AdminLayout";
 import { AdminRoute } from "./components/AdminRoute";
 import { ClientLayout } from "./components/ClientLayout";
+import { KitchenLayout } from "./components/KitchenLayout";
+import { KitchenRoute } from "./components/KitchenRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminCategories } from "./routes/AdminCategories";
 import { AdminCategoryEdit } from "./routes/AdminCategoryEdit";
@@ -14,6 +16,7 @@ import { AdminPlaceholder } from "./routes/AdminPlaceholder";
 import { Cart } from "./routes/Cart";
 import { Checkout } from "./routes/Checkout";
 import { Confirmation } from "./routes/Confirmation";
+import { KitchenQueue } from "./routes/KitchenQueue";
 import { Login } from "./routes/Login";
 import { Menu } from "./routes/Menu";
 import { OrderDetail } from "./routes/OrderDetail";
@@ -32,7 +35,10 @@ export default function App() {
         path="/login"
         element={
           token ? (
-            <Navigate to={role === "admin" ? "/admin" : "/"} replace />
+            <Navigate
+              to={role === "admin" ? "/admin" : role === "kitchen" ? "/kitchen" : "/"}
+              replace
+            />
           ) : (
             <Login />
           )
@@ -104,6 +110,18 @@ export default function App() {
         <Route path="items/new" element={<AdminItemNew />} />
         <Route path="items/:id/edit" element={<AdminItemEdit />} />
         <Route path="orders" element={<AdminPlaceholder title="Orders" />} />
+      </Route>
+      <Route
+        path="/kitchen"
+        element={
+          <ProtectedRoute>
+            <KitchenRoute>
+              <KitchenLayout />
+            </KitchenRoute>
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<KitchenQueue />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

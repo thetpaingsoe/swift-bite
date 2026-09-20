@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, User } from "lucide-react";
+import { ChefHat, LayoutDashboard, LogOut, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { User as UserType } from "../store/auth-slice";
@@ -63,6 +63,16 @@ export function ProfileMenu({
             >
               <LayoutDashboard className="h-4 w-4" />
               Admin panel
+            </Link>
+          )}
+          {user.role === "kitchen" && (
+            <Link
+              to="/kitchen"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-stone-700 hover:bg-stone-100"
+            >
+              <ChefHat className="h-4 w-4" />
+              Kitchen panel
             </Link>
           )}
           <Link

@@ -1,8 +1,8 @@
 # SwiftBite
 
 Full-stack food delivery platform. React storefront and admin panel on a NestJS
-microservice backend. Orders flow through a real event pipeline: placed → cooked
-→ dispatched, with one correlation ID tracing every order across all services.
+microservice backend. Orders flow through a real event pipeline: placed → accepted
+→ cooked → dispatched, with one correlation ID tracing every order across all services.
 
 ## What is here
 
@@ -14,14 +14,15 @@ microservice backend. Orders flow through a real event pipeline: placed → cook
 - Order detail with live status polling and a progress timeline
 - Cancel pending orders
 - Admin panel: dashboard stats, category CRUD, item CRUD with image and availability
-- Role gating (admin vs customer), shared profile menu, responsive layout
+- Kitchen board: ticket queue with accept, complete, and reject actions
+- Role gating (admin, kitchen, customer), shared profile menu, responsive layout
 
 **Backend** (NestJS 11 microservices, one database each)
 - auth-service: register, login, verify, JWT carrying roles
 - item-service: categories and menu items, admin-guarded writes, decimal prices
 - orders-service: multi-line orders with line-item snapshots, paginated list,
   event-driven status, pending-only cancellation
-- kitchen-service: RMQ consumer creating tickets, simulating cooking, emitting events
+- kitchen-service: hybrid HTTP API + RMQ consumer; staff accept, complete, or reject tickets
 - rider-service: RMQ consumer assigning riders and recording dispatches
 - RabbitMQ event flow with a status queue that advances orders without sync calls
 - Consul service discovery with healthy-instance filtering and static fallback
@@ -40,24 +41,30 @@ flowchart LR
     FE[Frontend<br/>:5173] -->|HTTP + JWT| AUTH[auth-service<br/>:3000]
     FE -->|HTTP| ITEM[item-service<br/>:3001]
     FE -->|HTTP + JWT| ORDERS[orders-service<br/>:3002]
+    FE -->|HTTP + JWT| KITCHEN[kitchen-service<br/>:3012]
     ORDERS -->|HTTP: fetch items| ITEM
     ORDERS -->|order_created| KQ[(kitchen_queue)]
-    KQ --> KITCHEN[kitchen-service<br/>RMQ + health :3010]
+    KQ --> KITCHEN
     KITCHEN -->|order_ready| RQ[(rider_queue)]
     RQ --> RIDER[rider-service<br/>RMQ + health :3011]
-    KITCHEN -->|order_cooking<br/>order_ready| OQ[(orders_queue)]
+    KITCHEN -->|order_cooking<br/>order_ready<br/>order_failed| OQ[(orders_queue)]
     RIDER -->|order_dispatched| OQ
     OQ --> ORDERS
     ORDERS -.->|Consul lookup| CONSUL([Consul<br/>:8500])
-    ITEM -.->|registers| CONSUL
 ```
 
 One `correlationId` rides every order from `POST /orders` through all three
 databases and log streams — see [observability.md](./docs/observability.md).
 
-Order status is event-driven: `pending` → `cooking` → `ready` → `dispatched`
-via `orders_queue`, with user `cancelled` while pending. One checkout is one order
-with its own line items — see [database-schema.md](./docs/database-schema.md).
+All five services register with Consul; orders-service resolves item-service
+dynamically at request time, and the rest are reached through queues — see
+[service-discovery.md](./docs/service-discovery.md).
+
+Orders are human gated in the kitchen: `pending` (awaiting approval) → `cooking`
+(accepted) → `ready` (completed) → `dispatched` (rider), advanced by events on
+`orders_queue`. `cancelled` is terminal, from the customer while pending or from a
+kitchen reject before ready. One checkout is one order with its own line items —
+see [database-schema.md](./docs/database-schema.md).
 
 ## Preview
 
@@ -73,6 +80,7 @@ takes a JWT from login):
 | auth-service | http://localhost:3000/api |
 | item-service | http://localhost:3001/api |
 | orders-service | http://localhost:3002/api |
+| kitchen-service | http://localhost:3012/api |
 
 Key endpoints: `POST /auth/register`, `POST /auth/login`, `GET /categories`,
 `GET /items`, `POST /orders` (lines array), `GET /orders?page=&limit=&status=`,
@@ -85,7 +93,7 @@ Key endpoints: `POST /auth/register`, `POST /auth/login`, `GET /categories`,
 | [auth-service](./auth-service/README.md) | auth_db | HTTP | 3000 | Users, JWT |
 | [item-service](./item-service/README.md) | item_db | HTTP | 3001 | Menu items, categories |
 | [orders-service](./orders-service/README.md) | orders_db | HTTP + RMQ | 3002 | Orders |
-| [kitchen-service](./kitchen-service/README.md) | kitchen_db | RMQ (health :3010) | — | Tickets |
+| [kitchen-service](./kitchen-service/README.md) | kitchen_db | HTTP + RMQ | 3012 | Tickets |
 | [rider-service](./rider-service/README.md) | rider_db | RMQ (health :3011) | — | Dispatches |
 | [frontend](./frontend/README.md) | — | HTTP | 5173 | Storefront + admin UI |
 

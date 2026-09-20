@@ -7,6 +7,8 @@ import Joi from 'joi';
 import { AppService } from './app.service';
 import { DbService } from '../db/db.service';
 import { ConsulService } from '../consul/consul.service';
+import { HealthModule } from '../health/health.module';
+import { KitchenGuard } from '../auth/kitchen.guard';
 import { correlationStorage } from '../correlation/correlation.storage';
 
 @Module({
@@ -15,12 +17,13 @@ import { correlationStorage } from '../correlation/correlation.storage';
       isGlobal: true,
       validationSchema: Joi.object({
         DATABASE_URL: Joi.string().required(),
-        PORT: Joi.number().default(3000),
+        PORT: Joi.number().default(3012),
         RABBITMQ_URL: Joi.string().default('amqp://guest:guest@localhost:5672'),
+        AUTH_SERVICE_URL: Joi.string().default('http://localhost:3000'),
         CONSUL_URL: Joi.string().default('http://localhost:8500'),
         SERVICE_NAME: Joi.string().default('kitchen-service'),
         SERVICE_ADDRESS: Joi.string().default('kitchen-service'),
-        SERVICE_PORT: Joi.number().default(3010),
+        SERVICE_PORT: Joi.number().default(3012),
         NODE_ENV: Joi.string()
           .valid('development', 'production', 'test')
           .default('development'),
@@ -87,8 +90,9 @@ import { correlationStorage } from '../correlation/correlation.storage';
         inject: [ConfigService],
       },
     ]),
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, DbService, ConsulService],
+  providers: [AppService, DbService, ConsulService, KitchenGuard],
 })
 export class AppModule {}
