@@ -65,7 +65,7 @@ export function ProfileMenu({
               Admin panel
             </Link>
           )}
-          {user.role === "kitchen" && (
+          {(user.role === "kitchen" || user.role === "admin") && (
             <Link
               to="/kitchen"
               onClick={() => setOpen(false)}

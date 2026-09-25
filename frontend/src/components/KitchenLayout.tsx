@@ -1,4 +1,5 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Store } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { clearSession } from "../store/auth-slice";
 import { BrandLogo } from "./BrandLogo";
@@ -24,11 +25,12 @@ export function KitchenLayout() {
           <div className="flex items-center gap-4">
             <Link
               to="/"
-              className="text-sm font-semibold tracking-wide text-stone-600 hover:text-primary"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold tracking-wide text-stone-600 hover:text-primary"
             >
+              <Store className="h-4 w-4" />
               STOREFRONT
             </Link>
-            {user && <ProfileMenu user={user} onLogout={logout} showAdminLink={false} />}
+            {user && <ProfileMenu user={user} onLogout={logout} />}
           </div>
         </div>
       </header>

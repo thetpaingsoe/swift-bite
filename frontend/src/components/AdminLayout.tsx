@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, Receipt, Tags } from "lucide-react";
+import { LayoutDashboard, Package, Receipt, Store, Tags } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { clearSession } from "../store/auth-slice";
 import { BrandLogo } from "./BrandLogo";
@@ -64,7 +64,11 @@ export function AdminLayout() {
             <BrandLogo suffix="Admin" />
           </Link>
           <div className="ml-auto flex items-center gap-4">
-            <Link to="/" className="text-sm font-semibold tracking-wide text-stone-600 hover:text-stone-900">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold tracking-wide text-stone-600 hover:text-stone-900"
+            >
+              <Store className="h-4 w-4" />
               STOREFRONT
             </Link>
             {user && <ProfileMenu user={user} onLogout={logout} showAdminLink={false} />}
