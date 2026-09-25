@@ -12,7 +12,8 @@ import { AdminDashboard } from "./routes/AdminDashboard";
 import { AdminItemEdit } from "./routes/AdminItemEdit";
 import { AdminItemNew } from "./routes/AdminItemNew";
 import { AdminItems } from "./routes/AdminItems";
-import { AdminPlaceholder } from "./routes/AdminPlaceholder";
+import { AdminOrderDetail } from "./routes/AdminOrderDetail";
+import { AdminOrders } from "./routes/AdminOrders";
 import { Cart } from "./routes/Cart";
 import { Checkout } from "./routes/Checkout";
 import { Confirmation } from "./routes/Confirmation";
@@ -109,7 +110,8 @@ export default function App() {
         <Route path="items" element={<AdminItems />} />
         <Route path="items/new" element={<AdminItemNew />} />
         <Route path="items/:id/edit" element={<AdminItemEdit />} />
-        <Route path="orders" element={<AdminPlaceholder title="Orders" />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="orders/:id" element={<AdminOrderDetail />} />
       </Route>
       <Route
         path="/kitchen"
