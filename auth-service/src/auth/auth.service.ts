@@ -4,6 +4,7 @@ import {
   ConflictException,
   UnauthorizedException,
   BadGatewayException,
+  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -99,6 +100,70 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Invalid token');
     }
+  }
+
+  async updateProfile(userId: string, name: string) {
+    let updated;
+    try {
+      [updated] = await this.dbService.db
+        .update(users)
+        .set({ name })
+        .where(eq(users.id, userId))
+        .returning();
+    } catch (error) {
+      this.logger.error('Failed to update profile', error as Error);
+      throw new BadGatewayException('Could not update the profile');
+    }
+
+    if (!updated) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      role: updated.role,
+    };
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const [user] = await this.dbService.db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const currentValid = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash,
+    );
+
+    if (!currentValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    try {
+      await this.dbService.db
+        .update(users)
+        .set({ passwordHash })
+        .where(eq(users.id, userId));
+    } catch (error) {
+      this.logger.error('Failed to change password', error as Error);
+      throw new BadGatewayException('Could not change the password');
+    }
+
+    return { success: true };
   }
 
   private signToken(userId: string, email: string, role: string): string {

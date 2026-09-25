@@ -23,6 +23,8 @@ import { Menu } from "./routes/Menu";
 import { OrderDetail } from "./routes/OrderDetail";
 import { Orders } from "./routes/Orders";
 import { Profile } from "./routes/Profile";
+import { ProfileEdit } from "./routes/ProfileEdit";
+import { ProfilePassword } from "./routes/ProfilePassword";
 import { Register } from "./routes/Register";
 import { useAppSelector } from "./store/store";
 
@@ -57,6 +59,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="profile/edit"
+          element={
+            <ProtectedRoute>
+              <ProfileEdit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="profile/password"
+          element={
+            <ProtectedRoute>
+              <ProfilePassword />
             </ProtectedRoute>
           }
         />

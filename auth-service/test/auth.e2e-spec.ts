@@ -228,4 +228,110 @@ describe('Auth (e2e)', () => {
         .expect(401);
     });
   });
+
+  describe('PATCH /auth/profile', () => {
+    let token: string;
+
+    beforeEach(async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'Password1!',
+        });
+      token = (response.body as { token: string }).token;
+    });
+
+    it('should update my display name', async () => {
+      const response = await request(app.getHttpServer())
+        .patch('/auth/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Johnny' })
+        .expect(200);
+
+      const body = response.body as { name: string; email: string };
+      expect(body.name).toBe('Johnny');
+      expect(body.email).toBe('john@example.com');
+    });
+
+    it('should reject missing token', async () => {
+      await request(app.getHttpServer())
+        .patch('/auth/profile')
+        .send({ name: 'Johnny' })
+        .expect(401);
+    });
+
+    it('should reject invalid token', async () => {
+      await request(app.getHttpServer())
+        .patch('/auth/profile')
+        .set('Authorization', 'Bearer invalid-token-here')
+        .send({ name: 'Johnny' })
+        .expect(401);
+    });
+
+    it('should reject too-short name', async () => {
+      await request(app.getHttpServer())
+        .patch('/auth/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'J' })
+        .expect(400);
+    });
+  });
+
+  describe('PATCH /auth/password', () => {
+    let token: string;
+
+    beforeEach(async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'Password1!',
+        });
+      token = (response.body as { token: string }).token;
+    });
+
+    it('should change password and allow login with the new one', async () => {
+      await request(app.getHttpServer())
+        .patch('/auth/password')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ currentPassword: 'Password1!', newPassword: 'NewPass2@' })
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: 'john@example.com', password: 'NewPass2@' })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: 'john@example.com', password: 'Password1!' })
+        .expect(401);
+    });
+
+    it('should reject wrong current password', async () => {
+      await request(app.getHttpServer())
+        .patch('/auth/password')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ currentPassword: 'WrongPass1!', newPassword: 'NewPass2@' })
+        .expect(401);
+    });
+
+    it('should reject weak new password', async () => {
+      await request(app.getHttpServer())
+        .patch('/auth/password')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ currentPassword: 'Password1!', newPassword: 'weak' })
+        .expect(400);
+    });
+
+    it('should reject missing token', async () => {
+      await request(app.getHttpServer())
+        .patch('/auth/password')
+        .send({ currentPassword: 'Password1!', newPassword: 'NewPass2@' })
+        .expect(401);
+    });
+  });
 });

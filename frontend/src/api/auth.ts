@@ -30,3 +30,24 @@ export function verify() {
     email: string;
   }>;
 }
+
+export interface ProfileResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export function updateProfile(name: string) {
+  return apiFetch(`${AUTH_URL}/auth/profile`, {
+    method: "PATCH",
+    body: JSON.stringify({ name }),
+  }) as Promise<ProfileResponse>;
+}
+
+export function changePassword(currentPassword: string, newPassword: string) {
+  return apiFetch(`${AUTH_URL}/auth/password`, {
+    method: "PATCH",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  }) as Promise<{ success: boolean }>;
+}
