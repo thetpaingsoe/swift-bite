@@ -36,6 +36,20 @@
       "when": 1789808223707,
       "tag": "0004_flippant_agent_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790405458199,
+      "tag": "0005_modern_the_leader",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790408585892,
+      "tag": "0006_gigantic_romulus",
+      "breakpoints": true
     }
   ]
 }

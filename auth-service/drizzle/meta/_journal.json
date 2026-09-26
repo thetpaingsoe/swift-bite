@@ -15,6 +15,27 @@
       "when": 1789228100577,
       "tag": "0001_sparkling_madame_hydra",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790405386525,
+      "tag": "0002_nifty_molecule_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790408556442,
+      "tag": "0003_faithful_excalibur",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790408973979,
+      "tag": "0004_even_doomsday",
+      "breakpoints": true
     }
   ]
 }

@@ -25,6 +25,8 @@ Dispatches store line snapshots as JSON (`items`), matching kitchen tickets.
 pnpm install
 pnpm db:generate   # new migration from schema
 pnpm db:migrate    # apply migrations
+pnpm db:migrate:test  # apply migrations to the test database
+pnpm test          # service specs need the test database, they skip loudly without it
 pnpm start:dev
 pnpm build
 ```

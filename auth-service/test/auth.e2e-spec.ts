@@ -4,7 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/auth/auth.module';
 import { DbService } from '../src/db/db.service';
-import { users } from '../src/db/schema';
+import { addresses, users } from '../src/db/schema';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication<App>;
@@ -33,6 +33,7 @@ describe('Auth (e2e)', () => {
   });
 
   beforeEach(async () => {
+    await dbService.db.delete(addresses);
     await dbService.db.delete(users);
   });
 
@@ -255,6 +256,42 @@ describe('Auth (e2e)', () => {
       expect(body.email).toBe('john@example.com');
     });
 
+    it('should update my phone', async () => {
+      const response = await request(app.getHttpServer())
+        .patch('/auth/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'John Doe', phone: '+959123456789' })
+        .expect(200);
+
+      expect((response.body as { phone: string }).phone).toBe('+959123456789');
+    });
+
+    it('should keep my phone on a name-only update', async () => {
+      await request(app.getHttpServer())
+        .patch('/auth/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'John Doe', phone: '+959123456789' })
+        .expect(200);
+
+      const response = await request(app.getHttpServer())
+        .patch('/auth/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Johnny' })
+        .expect(200);
+
+      const body = response.body as { name: string; phone: string };
+      expect(body.name).toBe('Johnny');
+      expect(body.phone).toBe('+959123456789');
+    });
+
+    it('should reject short phone', async () => {
+      await request(app.getHttpServer())
+        .patch('/auth/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'John Doe', phone: '123' })
+        .expect(400);
+    });
+
     it('should reject missing token', async () => {
       await request(app.getHttpServer())
         .patch('/auth/profile')
@@ -332,6 +369,126 @@ describe('Auth (e2e)', () => {
         .patch('/auth/password')
         .send({ currentPassword: 'Password1!', newPassword: 'NewPass2@' })
         .expect(401);
+    });
+  });
+
+  describe('/addresses', () => {
+    let token: string;
+
+    const home = {
+      label: 'Home',
+      street: '123 Main St',
+      area: 'Downtown',
+    };
+
+    beforeEach(async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'Password1!',
+        });
+      token = (response.body as { token: string }).token;
+    });
+
+    it('should save and list my addresses', async () => {
+      await request(app.getHttpServer())
+        .post('/addresses')
+        .set('Authorization', `Bearer ${token}`)
+        .send(home)
+        .expect(201);
+
+      const list = await request(app.getHttpServer())
+        .get('/addresses')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const rows = list.body as { label: string; street: string }[];
+      expect(rows).toHaveLength(1);
+      expect(rows[0].label).toBe('Home');
+      expect(rows[0].street).toBe('123 Main St');
+    });
+
+    it('should reject address without label', async () => {
+      await request(app.getHttpServer())
+        .post('/addresses')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          street: '123 Main St',
+          area: 'Downtown',
+        })
+        .expect(400);
+    });
+
+    it('should reject unauthenticated list', async () => {
+      await request(app.getHttpServer()).get('/addresses').expect(401);
+    });
+
+    it('should update my address', async () => {
+      const created = await request(app.getHttpServer())
+        .post('/addresses')
+        .set('Authorization', `Bearer ${token}`)
+        .send(home)
+        .expect(201);
+
+      const id = (created.body as { id: string }).id;
+      const updated = await request(app.getHttpServer())
+        .patch(`/addresses/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ label: 'Work' })
+        .expect(200);
+
+      expect((updated.body as { label: string }).label).toBe('Work');
+    });
+
+    it('should not touch another user address', async () => {
+      const created = await request(app.getHttpServer())
+        .post('/addresses')
+        .set('Authorization', `Bearer ${token}`)
+        .send(home)
+        .expect(201);
+      const id = (created.body as { id: string }).id;
+
+      const other = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          name: 'Jane Doe',
+          email: 'jane@example.com',
+          password: 'Password1!',
+        });
+      const otherToken = (other.body as { token: string }).token;
+
+      await request(app.getHttpServer())
+        .patch(`/addresses/${id}`)
+        .set('Authorization', `Bearer ${otherToken}`)
+        .send({ label: 'Stolen' })
+        .expect(404);
+
+      await request(app.getHttpServer())
+        .delete(`/addresses/${id}`)
+        .set('Authorization', `Bearer ${otherToken}`)
+        .expect(404);
+    });
+
+    it('should delete my address', async () => {
+      const created = await request(app.getHttpServer())
+        .post('/addresses')
+        .set('Authorization', `Bearer ${token}`)
+        .send(home)
+        .expect(201);
+      const id = (created.body as { id: string }).id;
+
+      await request(app.getHttpServer())
+        .delete(`/addresses/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const list = await request(app.getHttpServer())
+        .get('/addresses')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(list.body as unknown[]).toHaveLength(0);
     });
   });
 });

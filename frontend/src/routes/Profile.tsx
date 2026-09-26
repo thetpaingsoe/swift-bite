@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChefHat, LayoutDashboard, Lock, LogOut, Pencil, Receipt } from "lucide-react";
+import { ChefHat, LayoutDashboard, Lock, LogOut, MapPin, Pencil, Receipt } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { listOrders } from "../api/orders";
 import { Card } from "../components/ui/card";
@@ -48,6 +48,7 @@ export function Profile() {
           <div className="min-w-0">
             <p className="truncate text-lg font-semibold text-stone-900">{user.name}</p>
             <p className="truncate text-sm text-stone-500">{user.email}</p>
+            <p className="truncate text-sm text-stone-500">{user.phone ?? "No phone yet"}</p>
           </div>
           <span
             className={cn(
@@ -69,7 +70,7 @@ export function Profile() {
       <Card className="mt-4 px-6 py-2">
         <Link to="/profile/edit" className={linkClass}>
           <Pencil className="h-4 w-4" />
-          Edit name
+          Edit profile
         </Link>
         <Link
           to="/profile/password"
@@ -81,6 +82,13 @@ export function Profile() {
         <Link to="/orders" className={cn(linkClass, "border-t border-stone-100")}>
           <Receipt className="h-4 w-4" />
           My orders
+        </Link>
+        <Link
+          to="/profile/addresses"
+          className={cn(linkClass, "border-t border-stone-100")}
+        >
+          <MapPin className="h-4 w-4" />
+          My addresses
         </Link>
         {user.role === "admin" && (
           <Link to="/admin" className={cn(linkClass, "border-t border-stone-100")}>

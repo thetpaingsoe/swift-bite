@@ -68,6 +68,8 @@ export class AppService {
           totalPrice: String(totalPrice),
           street: dto.street,
           area: dto.area,
+          phone: dto.phone,
+          note: dto.note ?? null,
           status: 'pending',
           correlationId,
         })
@@ -101,6 +103,8 @@ export class AppService {
             })),
             street: order.street,
             area: order.area,
+            phone: order.phone,
+            note: order.note,
             correlationId,
           })
           .pipe(timeout(5000)),

@@ -84,6 +84,7 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": ["node_modules/(?!.*(@nestjs/axios|axios)/)"],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

@@ -1,0 +1,1 @@
+ALTER TABLE "dispatches" ADD COLUMN "phone" varchar(30);

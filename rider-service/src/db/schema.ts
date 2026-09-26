@@ -19,6 +19,8 @@ export const dispatches = pgTable('dispatches', {
   items: jsonb('items').$type<DispatchLine[]>().notNull(),
   street: varchar('street', { length: 255 }).notNull(),
   area: varchar('area', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 30 }),
+  note: varchar('note', { length: 255 }),
   riderStatus: varchar('status', { length: 50 })
     .notNull()
     .default('dispatched'),

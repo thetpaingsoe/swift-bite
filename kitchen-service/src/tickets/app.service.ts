@@ -27,6 +27,8 @@ export class AppService {
     lines: TicketLine[];
     street: string;
     area: string;
+    phone?: string | null;
+    note?: string | null;
     correlationId: string;
   }) {
     try {
@@ -38,6 +40,8 @@ export class AppService {
           items: data.lines,
           street: data.street,
           area: data.area,
+          phone: data.phone ?? null,
+          note: data.note ?? null,
           status: 'received',
           correlationId: data.correlationId,
         })
@@ -106,6 +110,8 @@ export class AppService {
             lines: ticket.items,
             street: ticket.street,
             area: ticket.area,
+            phone: ticket.phone,
+            note: ticket.note,
             correlationId: ticket.correlationId,
           })
           .pipe(timeout(5000)),

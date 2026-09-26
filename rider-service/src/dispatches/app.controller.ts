@@ -22,6 +22,8 @@ export class AppController {
       lines: DispatchLine[];
       street: string;
       area: string;
+      phone?: string | null;
+      note?: string | null;
       correlationId?: string;
     },
   ) {

@@ -20,6 +20,8 @@ export class AppService {
     lines: DispatchLine[];
     street: string;
     area: string;
+    phone?: string | null;
+    note?: string | null;
     correlationId: string;
   }) {
     const rider = RIDERS[Math.floor(Math.random() * RIDERS.length)];
@@ -34,6 +36,8 @@ export class AppService {
           items: data.lines,
           street: data.street,
           area: data.area,
+          phone: data.phone ?? null,
+          note: data.note ?? null,
           riderStatus: 'dispatched',
           correlationId: data.correlationId,
         })

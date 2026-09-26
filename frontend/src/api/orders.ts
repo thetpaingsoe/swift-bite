@@ -11,6 +11,8 @@ export interface PlaceOrderInput {
   customerName: string;
   street: string;
   area: string;
+  phone: string;
+  note?: string;
   lines: PlaceOrderLine[];
 }
 
@@ -35,6 +37,8 @@ export interface Order {
   totalPrice: string;
   street: string;
   area: string;
+  phone: string | null;
+  note: string | null;
   status: string;
   createdAt: string;
   lines: OrderLine[];

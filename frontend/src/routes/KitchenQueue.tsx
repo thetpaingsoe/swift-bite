@@ -51,6 +51,17 @@ function TicketCard({
         ))}
       </ul>
       <p className="mt-3 text-xs text-stone-400">{ticket.area}</p>
+      {ticket.phone && (
+        <a
+          href={`tel:${ticket.phone}`}
+          className="mt-1 block text-sm font-medium text-stone-900 hover:underline"
+        >
+          {ticket.phone}
+        </a>
+      )}
+      {ticket.note && (
+        <p className="mt-1 text-sm text-amber-700">{ticket.note}</p>
+      )}
       <div className="mt-4 flex gap-2">
         {ticket.status === "received" && (
           <Button

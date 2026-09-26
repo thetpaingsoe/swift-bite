@@ -59,6 +59,7 @@ export class AuthService {
       id: created.id,
       name: created.name,
       email: created.email,
+      phone: created.phone,
       role: created.role,
       token,
     };
@@ -88,6 +89,7 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       role: user.role,
       token,
     };
@@ -102,12 +104,16 @@ export class AuthService {
     }
   }
 
-  async updateProfile(userId: string, name: string) {
+  async updateProfile(userId: string, name: string, phone?: string) {
+    const patch: { name: string; phone?: string | null } = { name };
+    if (phone !== undefined) {
+      patch.phone = phone;
+    }
     let updated;
     try {
       [updated] = await this.dbService.db
         .update(users)
-        .set({ name })
+        .set(patch)
         .where(eq(users.id, userId))
         .returning();
     } catch (error) {
@@ -123,6 +129,7 @@ export class AuthService {
       id: updated.id,
       name: updated.name,
       email: updated.email,
+      phone: updated.phone,
       role: updated.role,
     };
   }

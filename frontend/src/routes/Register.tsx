@@ -38,7 +38,7 @@ export function Register() {
       const res = await register(values.name, values.email, values.password);
       dispatch(
         setSession({
-          user: { id: res.id, name: res.name, email: res.email, role: res.role },
+          user: { id: res.id, name: res.name, email: res.email, phone: res.phone, role: res.role },
           token: res.token,
         }),
       );

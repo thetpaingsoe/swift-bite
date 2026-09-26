@@ -1,12 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
   IsInt,
+  IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
   Min,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 
@@ -40,4 +43,16 @@ export class CreateOrderDto {
   @ApiProperty({ example: 'Downtown' })
   @IsString()
   area!: string;
+
+  @ApiProperty({ example: '+959123456789' })
+  @IsString()
+  @MinLength(6)
+  @MaxLength(30)
+  phone!: string;
+
+  @ApiPropertyOptional({ example: 'Leave at the door' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  note?: string;
 }
