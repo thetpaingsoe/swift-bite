@@ -38,6 +38,8 @@ export class AppController {
       lines: TicketLine[];
       street: string;
       area: string;
+      phone?: string | null;
+      note?: string | null;
       correlationId?: string;
     },
   ) {

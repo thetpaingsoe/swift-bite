@@ -11,6 +11,12 @@ import { useAppDispatch, useAppSelector } from "../store/store";
 
 const schema = z.object({
   name: z.string().min(2, "Name needs at least 2 characters").max(100),
+  phone: z
+    .string()
+    .max(30)
+    .refine((v) => v.trim() === "" || v.trim().length >= 6, {
+      message: "Phone needs at least 6 characters",
+    }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -25,13 +31,14 @@ export function ProfileEdit() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    values: { name: user?.name ?? "" },
+    values: { name: user?.name ?? "", phone: user?.phone ?? "" },
   });
 
   async function onSubmit(values: FormValues) {
     try {
-      const res = await updateProfile(values.name.trim());
-      dispatch(updateUser({ name: res.name }));
+      const phone = values.phone.trim() ? values.phone.trim() : undefined;
+      const res = await updateProfile(values.name.trim(), phone);
+      dispatch(updateUser({ name: res.name, phone: res.phone }));
       toast.success("Profile updated");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Save failed");
@@ -45,19 +52,25 @@ export function ProfileEdit() {
           Profile
         </Link>
         <span className="text-stone-300">/</span>
-        <span className="font-medium text-stone-900">Edit name</span>
+        <span className="font-medium text-stone-900">Edit profile</span>
       </nav>
       <h1 className="mt-6 text-2xl font-semibold tracking-tight text-stone-900">
-        Edit name
+        Edit profile
       </h1>
       <p className="mt-1 text-sm text-stone-500">
-        This is the name shown on your orders and in the header menu.
+        Your phone is used as the contact number on every order.
       </p>
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 max-w-md space-y-4">
         <div>
           <Input placeholder="Name" autoComplete="name" {...field("name")} />
           {errors.name && (
             <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+          )}
+        </div>
+        <div>
+          <Input placeholder="Phone, optional" autoComplete="tel" {...field("phone")} />
+          {errors.phone && (
+            <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
           )}
         </div>
         <div className="flex gap-2">

@@ -119,6 +119,18 @@ export function AdminOrderDetail() {
                 {order.street}, {order.area}
               </dd>
             </div>
+            {order.phone && (
+              <div className="flex justify-between">
+                <dt className="text-stone-500">Phone</dt>
+                <dd className="text-stone-900">{order.phone}</dd>
+              </div>
+            )}
+            {order.note && (
+              <div className="flex justify-between">
+                <dt className="text-stone-500">Note</dt>
+                <dd className="text-stone-900">{order.note}</dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-stone-500">Placed</dt>
               <dd className="text-stone-900">

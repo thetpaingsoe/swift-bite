@@ -13,6 +13,8 @@ import Joi from 'joi';
 import { DbService } from '../db/db.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { AddressesController } from '../addresses/addresses.controller';
+import { AddressesService } from '../addresses/addresses.service';
 import { HealthModule } from '../health/health.module';
 import { ConsulService } from '../consul/consul.service';
 
@@ -76,8 +78,8 @@ import { ConsulService } from '../consul/consul.service';
     }),
     HealthModule,
   ],
-  controllers: [AuthController],
-  providers: [AuthService, DbService, ConsulService],
+  controllers: [AuthController, AddressesController],
+  providers: [AuthService, AddressesService, DbService, ConsulService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

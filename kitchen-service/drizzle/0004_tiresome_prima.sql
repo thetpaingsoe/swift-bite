@@ -1,0 +1,1 @@
+ALTER TABLE "tickets" ADD COLUMN "phone" varchar(30);

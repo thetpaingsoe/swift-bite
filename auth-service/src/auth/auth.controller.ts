@@ -61,7 +61,7 @@ export class AuthController {
     @Body() dto: UpdateProfileDto,
   ) {
     const { userId } = await this.requireUserId(authorization);
-    return this.authService.updateProfile(userId, dto.name);
+    return this.authService.updateProfile(userId, dto.name, dto.phone);
   }
 
   @Patch('password')

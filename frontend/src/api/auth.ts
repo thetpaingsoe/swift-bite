@@ -6,6 +6,7 @@ export interface AuthResponse {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   role: string;
   token: string;
 }
@@ -35,13 +36,14 @@ export interface ProfileResponse {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   role: string;
 }
 
-export function updateProfile(name: string) {
+export function updateProfile(name: string, phone?: string) {
   return apiFetch(`${AUTH_URL}/auth/profile`, {
     method: "PATCH",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, phone }),
   }) as Promise<ProfileResponse>;
 }
 

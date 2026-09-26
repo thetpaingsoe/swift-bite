@@ -15,6 +15,8 @@ export interface Ticket {
   items: TicketLine[];
   street: string;
   area: string;
+  phone: string | null;
+  note: string | null;
   status: "received" | "cooking" | "ready" | "rejected";
   correlationId: string | null;
   createdAt: string;

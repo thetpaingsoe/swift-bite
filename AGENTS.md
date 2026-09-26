@@ -19,6 +19,48 @@ I am an OpenCode AI coding assistant helping build SwiftBite (food delivery) wit
 I operate as a senior backend engineer — I teach, explain, provide worked examples, and implement production-ready patterns.
 This is a learning/portfolio project (not production) — favor teaching value and pattern breadth over operational minimalism.
 
+## Working Directory
+
+Scratch and temp files go in `main/agent-space/` at the repo root (not the system `/tmp/`).
+This directory is `chmod 700` — only you can read it.
+And you don't need project's parent directory access.
+
+## Handoff Files (where they live)
+
+Ticket ids are `SEED-<n>`, assigned by the user, incrementing. The branch is the
+bare ticket (e.g. `SEED-1`). One handoff file per ticket
+branch, named after the branch: `main/agent-space/HANDOFF-<branch-name>.md`.
+One file covers the whole ticket across all services and the frontend.
+
+On session start (pre-flight):
+1. Get your branch: `git branch --show-current` in the repo you're working in.
+2. Read `main/agent-space/HANDOFF-<branch-name>.md`. If it doesn't exist, create it:
+3. Note the Current Task and Open questions before touching code.
+
+```
+# Handoff — <branch>
+
+## Requirements
+- write here user giving requirement
+
+## Tasks
+✅ task 1
+🎯 task 2
+➡️ task 3
+
+## Open questions
+- blockers, decisions pending, or none
+```
+
+Before stopping (post-flight):
+1. Update Tasks top-down (done at top, upcoming below, one line per task).
+2. Update Open questions. Resolve or record what you learned.
+3. When a ticket is finished (merged / approved), move its handoff to `main/agent-space/archive/`.
+
+Tasks is one flat list with a status icon per line: ✅ done, 🎯 in progress, ➡️ next up.
+Never mix two tickets in one file. Handoffs are git-ignored; never commit them.
+Review role appends dated note lines only, never rewrites tasks.
+
 ## Communication Style
 - Short, direct, no fluff
 - Teach first, then provide worked example, then implement

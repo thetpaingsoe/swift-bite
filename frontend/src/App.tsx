@@ -23,6 +23,9 @@ import { Menu } from "./routes/Menu";
 import { OrderDetail } from "./routes/OrderDetail";
 import { Orders } from "./routes/Orders";
 import { Profile } from "./routes/Profile";
+import { ProfileAddressEdit } from "./routes/ProfileAddressEdit";
+import { ProfileAddressNew } from "./routes/ProfileAddressNew";
+import { ProfileAddresses } from "./routes/ProfileAddresses";
 import { ProfileEdit } from "./routes/ProfileEdit";
 import { ProfilePassword } from "./routes/ProfilePassword";
 import { Register } from "./routes/Register";
@@ -75,6 +78,30 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ProfilePassword />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="profile/addresses"
+          element={
+            <ProtectedRoute>
+              <ProfileAddresses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="profile/addresses/new"
+          element={
+            <ProtectedRoute>
+              <ProfileAddressNew />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="profile/addresses/:id/edit"
+          element={
+            <ProtectedRoute>
+              <ProfileAddressEdit />
             </ProtectedRoute>
           }
         />

@@ -19,6 +19,8 @@ export const tickets = pgTable('tickets', {
   items: jsonb('items').$type<TicketLine[]>().notNull(),
   street: varchar('street', { length: 255 }).notNull(),
   area: varchar('area', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 30 }),
+  note: varchar('note', { length: 255 }),
   status: varchar('status', { length: 50 }).notNull().default('received'),
   correlationId: varchar('correlation_id', { length: 36 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

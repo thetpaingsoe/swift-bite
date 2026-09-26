@@ -33,7 +33,7 @@ export function Login() {
       const res = await login(values.email, values.password);
       dispatch(
         setSession({
-          user: { id: res.id, name: res.name, email: res.email, role: res.role },
+          user: { id: res.id, name: res.name, email: res.email, phone: res.phone, role: res.role },
           token: res.token,
         }),
       );
