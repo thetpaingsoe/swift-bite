@@ -128,6 +128,10 @@ export class AppService {
     return updated;
   }
 
+  async failTicket(orderId: string, correlationId: string) {
+    await this.notifyOrders('order_failed', orderId, correlationId);
+  }
+
   async rejectTicket(id: string) {
     const ticket = await this.requireStatus(id, ['received', 'cooking']);
     const [updated] = await this.dbService.db
@@ -162,7 +166,9 @@ export class AppService {
           .emit(event, { orderId, correlationId })
           .pipe(timeout(5000)),
       );
-      this.logger.log(`Event emitted to orders_queue (${event})`);
+      this.logger.log(
+        `Event emitted to orders_queue (${event}) for order ${orderId}`,
+      );
     } catch (error) {
       this.logger.error(
         `Ticket for order ${orderId} could not notify orders (${event})`,

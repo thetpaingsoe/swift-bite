@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { DbService } from '../db/db.service';
 import { ConsulService } from '../consul/consul.service';
 import { HealthModule } from '../health/health.module';
+import { DlqService } from '../dlq/dlq.service';
 import { KitchenGuard } from '../auth/kitchen.guard';
 import { correlationStorage } from '../correlation/correlation.storage';
 
@@ -70,6 +71,10 @@ import { correlationStorage } from '../correlation/correlation.storage';
             queue: 'rider_queue',
             queueOptions: {
               durable: configService.get<string>('NODE_ENV') === 'production',
+              arguments: {
+                'x-dead-letter-exchange': '',
+                'x-dead-letter-routing-key': 'rider_queue.dlq',
+              },
             },
           },
         }),
@@ -93,6 +98,6 @@ import { correlationStorage } from '../correlation/correlation.storage';
     HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, DbService, ConsulService, KitchenGuard],
+  providers: [AppService, DbService, ConsulService, KitchenGuard, DlqService],
 })
 export class AppModule {}

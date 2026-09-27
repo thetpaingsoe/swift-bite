@@ -33,7 +33,12 @@ async function bootstrap() {
       queue: 'kitchen_queue',
       queueOptions: {
         durable: configService.get<string>('NODE_ENV') === 'production',
+        arguments: {
+          'x-dead-letter-exchange': '',
+          'x-dead-letter-routing-key': 'kitchen_queue.dlq',
+        },
       },
+      noAck: false,
     },
   });
   await app.startAllMicroservices();

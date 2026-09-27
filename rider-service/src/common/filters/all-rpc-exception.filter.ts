@@ -6,6 +6,9 @@ export class AllRpcExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllRpcExceptionsFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost) {
+    if (host.getType() !== 'rpc') {
+      throw exception;
+    }
     const ctx = host.switchToRpc();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     const pattern: string = ctx.getContext().getPattern?.() ?? 'unknown';

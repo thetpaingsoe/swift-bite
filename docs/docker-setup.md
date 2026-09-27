@@ -109,6 +109,32 @@ Or rebuild a single service:
 docker-compose up --build -d orders-service
 ```
 
+### Queue argument changes need a queue delete first
+
+RabbitMQ rejects redeclaring an existing queue with different arguments
+(`PRECONDITION_FAILED`, 406) and the service fails to start. This bites
+whenever `queueOptions` change — e.g. adding the `x-dead-letter-*`
+arguments. Delete the affected queues before redeploying (dev queues are
+non-durable, so a broker restart recreates them just as well):
+
+```bash
+# Empty queues first if it matters — deletion drops pending messages
+curl -u guest:guest -X DELETE \
+  http://localhost:15672/api/queues/%2F/kitchen_queue
+curl -u guest:guest -X DELETE \
+  http://localhost:15672/api/queues/%2F/rider_queue
+```
+
+Dead-letter queues are declared with arguments too, so include them when
+queue options change:
+
+```bash
+curl -u guest:guest -X DELETE \
+  http://localhost:15672/api/queues/%2F/kitchen_queue.dlq
+curl -u guest:guest -X DELETE \
+  http://localhost:15672/api/queues/%2F/rider_queue.dlq
+```
+
 ## Project structure
 
 ```

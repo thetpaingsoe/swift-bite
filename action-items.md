@@ -16,13 +16,13 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `89 / 94 items completed (95%)`
+**Overall:** `94 / 103 items completed (91%)`
 
 ```
 Phase 1 — Foundation       [██████████]  33/33  (100%)
 Phase 2 — Operations       [██████████]  20/20 (100%)
 Phase 3 — Observability    [██████████]  13/13 (100%)
-Phase 4 — Resilience       [░░░░░░░░░░]  0/20  (0%)
+Phase 4 — Resilience       [███░░░░░░░]  8/29  (28%)
 Phase 5 — Organization     [█░░░░░░░░░]  1/8   (13%)
 Phase 6 — Frontend         [█████░░░░░]  5/8   (62%)
 Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
@@ -196,41 +196,49 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 ## Phase 4 — Resilience (Retry, DLQ, Rate Limiting)
 
 ### 4.1 Add dead-letter queues for RMQ
-- [ ] Configure DLQ for `kitchen_queue`: messages that fail processing go to `kitchen_queue.dlq`
-- [ ] Configure DLQ for `rider_queue`: messages that fail go to `rider_queue.dlq`
-- [ ] Set up a DLQ consumer that logs/re-queues alerts
+- [x] Configure DLQ args for `kitchen_queue` and `rider_queue` (failed messages go to `*.dlq`)
+- [x] Set up a DLQ consumer that logs/alerts (no re-queue machinery)
+- [x] Live-verify: poison message lands in the DLQ
 
-### 4.2 Add retry logic
-- [ ] Implement retry with exponential backoff for DB operations
-- [ ] For RMQ consumers: if processing fails, reject the message (it goes to DLQ after max retries)
-- [ ] Consider using a simple retry wrapper or library (e.g., `p-retry`)
+### 4.2 Add retry logic (RMQ-only)
+- [ ] RMQ consumers reject failed messages so they route to the DLQ after max retries
+- [ ] Retry wrapper around the item-service fetch in orders-service (ties into 4.4)
+- [ ] No blind retries on DB writes (Neon failures are rarely transient-retryable; writes risk duplicates)
 
 ### 4.3 Add rate limiting
 - [ ] Install `@nestjs/throttler` in orders-service
 - [ ] Configure `ThrottlerModule` with sensible defaults (e.g., 10 requests/60 seconds per IP)
-- [ ] This protects the public `POST /orders` endpoint from abuse
+- [ ] Scope to `POST /orders` (only public write endpoint; skip auth/item reads)
 
 ### 4.4 Add circuit breaker for inter-service calls
-- [ ] Install `opossum` in orders-service
-- [ ] Wrap item-service HTTP calls with circuit breaker
+- [ ] Install `opossum` in orders-service (verified missing 2026-09-27 despite the skill claiming it — correct the skill when done)
+- [ ] Wrap item-service HTTP calls with circuit breaker (add HTTP timeout as part of this)
 - [ ] Configure: 5 failures → open circuit for 30s → half-open → retry
 - [ ] Return meaningful error when circuit is open (503 Service Unavailable)
 - [ ] Add circuit breaker metrics/logging for observability
 
 ### 4.5 Add saga pattern (compensation)
-- [ ] orders-service emits `order_created` with a saga ID
-- [ ] If kitchen-service fails or rejects: emits `order_failed` with saga ID
-- [ ] orders-service listens for `order_failed`, updates order status to `cancelled`
-- [ ] Add `cancelled` status to order status enum
-- [ ] Add compensation logging for observability
+- [x] orders-service emits `order_created` (verified: `orders-service/src/orders/app.service.ts` emit; `correlationId` + `orderId` serve as the saga identity — separate saga ID dropped as redundant)
+- [x] kitchen-service reject emits `order_failed` (verified: `kitchen-service/src/tickets/app.service.ts` `notifyOrders('order_failed', ...)`)
+- [x] orders-service listens for `order_failed`, updates order status to `cancelled` (verified: `orders-service/src/orders/app.controller.ts` `@EventPattern('order_failed')`)
+- [x] `cancelled` status supported (verified: `list-orders.dto.ts` allows it, service guards terminal `cancelled`)
+- [x] Compensation logging for observability (verified live 2026-09-12: reject → cancel flow)
 - [ ] Handle partial failures (e.g., kitchen succeeds but rider fails)
 
 ### 4.6 Harden Consul registration (ghost prevention)
 - [ ] Point health-check URLs at the container hostname (`os.hostname()`), keep `Address` as the shared Compose name — dead incarnations go critical instead of borrowing successors' heartbeats
 - [ ] Add `depends_on: consul (service_healthy)` in compose for deterministic boot ordering
-- [ ] Add 60s re-registration heartbeat in `ConsulService` (unref'd timer, cleared in `onModuleDestroy`) + fake-timer unit tests per service — covers agent-amnesia, not ghosts
-- [ ] Timed recreate test proving `onModuleDestroy` deregistration completes inside Docker's stop grace
-- [ ] Ghost-scenario verification: recreate a container, old ID goes critical and is purged via `DeregisterCriticalServiceAfter` with zero manual calls
+- [ ] Add 60s re-registration heartbeat in `ConsulService` (unref'd timer, cleared in `onModuleDestroy`) — covers agent-amnesia, not ghosts
+
+### 4.7 Guaranteed `order_created` delivery
+- [ ] Flag orders whose `order_created` emit failed after the DB save (today the code only logs — the order sits `pending` forever with no ticket)
+- [ ] Add a reconciler (startup and/or interval) that re-emits unsent `pending` orders
+- [ ] Test + live-verify (kill broker mid-order, recover, confirm the ticket appears)
+
+### 4.8 Checkout survives auth-service outage (added by SEED-1)
+- [ ] Cache last-known addresses client-side; offer them read-only with a stale warning when auth-service is down (today: no address to pick means no order at all)
+- [ ] Retry on the address query before falling back to cache
+- [ ] Manual verify: stop auth-service, confirm checkout still offers the cached address
 
 ---
 
