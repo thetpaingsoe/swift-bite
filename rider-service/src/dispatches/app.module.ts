@@ -7,6 +7,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DbService } from '../db/db.service';
 import { ConsulService } from '../consul/consul.service';
+import { HealthModule } from '../health/health.module';
+import { DlqService } from '../dlq/dlq.service';
 import { correlationStorage } from '../correlation/correlation.storage';
 
 @Module({
@@ -73,8 +75,9 @@ import { correlationStorage } from '../correlation/correlation.storage';
         inject: [ConfigService],
       },
     ]),
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, DbService, ConsulService],
+  providers: [AppService, DbService, ConsulService, DlqService],
 })
 export class AppModule {}

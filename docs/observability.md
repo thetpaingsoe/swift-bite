@@ -57,6 +57,31 @@ SELECT order_id, status FROM dispatches WHERE correlation_id = 'debug-1';
 One ID, three databases, five log streams (auth/item join in when the caller forwards
 the header — e.g. a frontend session ID).
 
+## Dead-letter queues
+
+`kitchen_queue` and `rider_queue` declare a dead-letter route to
+`kitchen_queue.dlq` / `rider_queue.dlq` (default exchange, routing key =
+DLQ name). Consumers run with `noAck: false`: success acks, any failure
+nacks without requeue, so poison messages land in the DLQ instead of
+retrying forever or vanishing.
+
+Each DLQ has a dedicated consumer (kitchen owns `kitchen_queue.dlq`,
+rider owns `rider_queue.dlq`) that logs one error line per message and
+acks it. Never re-queued, no redelivery — inspect and replay by hand:
+
+```bash
+# Watch for poison (payload truncated at 2000 chars in the log line)
+docker-compose logs kitchen-service rider-service | grep "DLQ ALERT"
+
+# Replay a dead message: republish its payload to the main queue
+# via http://localhost:15672 (guest/guest), then watch it flow again
+```
+
+Compensation still applies: when a *validated* `order_created` payload
+fails ticket creation, kitchen emits `order_failed` (order → cancelled)
+in addition to the DLQ routing. Malformed payloads DLQ only — there is
+no trustworthy `orderId` to compensate.
+
 ## Health endpoints (for probes and humans)
 
 | Service | Liveness | Readiness checks |

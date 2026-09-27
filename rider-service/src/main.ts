@@ -3,42 +3,41 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './dispatches/app.module';
 import { AllRpcExceptionsFilter } from './common/filters/all-rpc-exception.filter';
 import { Logger } from '@nestjs/common';
-import { HealthModule } from './health/health.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import { ConsulService } from './consul/consul.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(PinoLogger));
+  const logger = new Logger('Bootstrap');
   const configService = app.get(ConfigService);
 
-  const microservice = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.RMQ,
-      options: {
-        urls: [configService.get<string>('RABBITMQ_URL')!],
-        queue: 'rider_queue',
-        queueOptions: {
-          durable: configService.get<string>('NODE_ENV') === 'production',
+  app.useGlobalFilters(new AllRpcExceptionsFilter());
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [configService.get<string>('RABBITMQ_URL')!],
+      queue: 'rider_queue',
+      queueOptions: {
+        durable: configService.get<string>('NODE_ENV') === 'production',
+        arguments: {
+          'x-dead-letter-exchange': '',
+          'x-dead-letter-routing-key': 'rider_queue.dlq',
         },
       },
+      noAck: false,
     },
-  );
-
-  microservice.useGlobalFilters(new AllRpcExceptionsFilter());
-  microservice.useLogger(microservice.get(PinoLogger));
-
-  await microservice.listen();
-  const logger = new Logger('Bootstrap');
+  });
+  await app.startAllMicroservices();
   logger.log('Rider service listening on rider_queue');
 
-  microservice.enableShutdownHooks();
-  await app.get(ConsulService).register();
-
-  const healthApp = await NestFactory.create(HealthModule);
-  const healthPort = configService.get<number>('HEALTH_PORT', 3011);
-  await healthApp.listen(healthPort);
+  const healthPort = configService.get<number>('SERVICE_PORT', 3011);
+  await app.listen(healthPort);
   logger.log(`Rider health server running on port ${healthPort}`);
+
+  app.enableShutdownHooks();
+  await app.get(ConsulService).register();
 }
 bootstrap();

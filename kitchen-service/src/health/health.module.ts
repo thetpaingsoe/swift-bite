@@ -21,6 +21,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             queue: 'rider_queue',
             queueOptions: {
               durable: configService.get<string>('NODE_ENV') === 'production',
+              arguments: {
+                'x-dead-letter-exchange': '',
+                'x-dead-letter-routing-key': 'rider_queue.dlq',
+              },
             },
           },
         }),

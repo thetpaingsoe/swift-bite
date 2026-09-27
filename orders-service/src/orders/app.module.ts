@@ -85,6 +85,10 @@ import { DiscoveryService } from '../consul/discovery.service';
             queue: 'kitchen_queue',
             queueOptions: {
               durable: configService.get<string>('NODE_ENV') === 'production',
+              arguments: {
+                'x-dead-letter-exchange': '',
+                'x-dead-letter-routing-key': 'kitchen_queue.dlq',
+              },
             },
           },
         }),

@@ -87,7 +87,7 @@ NestJS 11 / TypeScript 5.7 strict / Drizzle ORM / Neon Postgres / RabbitMQ / Con
 | rabbitmq | — | 5672/15672 | ✅ |
 
 ## Current Task
-Phase 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD) plus kitchen board (/kitchen, hybrid kitchen-service :3012, accept/complete/reject). Next: 6.6 polish or Phase 4 resilience. See action-items.md (89/94).
+Phase 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD) plus kitchen board (/kitchen, hybrid kitchen-service :3012, accept/complete/reject). SEED-7 done: RMQ DLQs live (kitchen_queue.dlq + rider_queue.dlq, nack routing, DLQ alert logs, verified end to end). Next: 6.6 polish or Phase 4 follow-ups (4.2 retry). See action-items.md (89/94).
 
 ## Conventions
 - Feature tests over unit tests (every change production-ready)
