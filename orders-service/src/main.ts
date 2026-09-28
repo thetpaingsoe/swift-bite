@@ -33,6 +33,7 @@ async function bootstrap() {
       queueOptions: {
         durable: configService.get<string>('NODE_ENV') === 'production',
       },
+      noAck: false,
     },
   });
   await app.startAllMicroservices();

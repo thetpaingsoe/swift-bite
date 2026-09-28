@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards, Logger } from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { EventPattern, Payload, Ctx, RmqContext } from '@nestjs/microservices';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -13,6 +13,17 @@ import {
   correlationStorage,
   resolveCorrelationId,
 } from '../correlation/correlation.storage';
+import {
+  MAX_ATTEMPTS,
+  RETRY_DELAY_MS,
+  isRetryable,
+  sleep,
+} from '../rmq/rmq-retry';
+
+interface RmqChannel {
+  ack(message: unknown): void;
+  nack(message: unknown, allUpTo: boolean, requeue: boolean): void;
+}
 
 @Controller('orders')
 @ApiBearerAuth()
@@ -67,45 +78,80 @@ export class AppController {
   @EventPattern('order_cooking')
   async handleOrderCooking(
     @Payload() data: { orderId: string; correlationId?: string },
+    @Ctx() context: RmqContext,
   ) {
-    await this.applyStatus(data, 'cooking');
+    await this.applyStatus(data, 'cooking', context);
   }
 
   @EventPattern('order_ready')
   async handleOrderReady(
     @Payload() data: { orderId: string; correlationId?: string },
+    @Ctx() context: RmqContext,
   ) {
-    await this.applyStatus(data, 'ready');
+    await this.applyStatus(data, 'ready', context);
   }
 
   @EventPattern('order_dispatched')
   async handleOrderDispatched(
     @Payload() data: { orderId: string; correlationId?: string },
+    @Ctx() context: RmqContext,
   ) {
-    await this.applyStatus(data, 'dispatched');
+    await this.applyStatus(data, 'dispatched', context);
   }
 
   @EventPattern('order_failed')
   async handleOrderFailed(
     @Payload() data: { orderId: string; correlationId?: string },
+    @Ctx() context: RmqContext,
   ) {
-    await this.applyStatus(data, 'cancelled');
+    await this.applyStatus(data, 'cancelled', context);
   }
 
   private async applyStatus(
     data: { orderId: string; correlationId?: string },
     status: string,
+    context: RmqContext,
   ) {
-    const { correlationId, minted } = resolveCorrelationId(
-      data.correlationId,
-    );
+    const channel = context.getChannelRef() as RmqChannel;
+    const message: unknown = context.getMessage();
+    if (
+      !data ||
+      typeof data.orderId !== 'string' ||
+      data.orderId.length === 0
+    ) {
+      this.logger.error(
+        `orders rejected status event (${status}): payload missing orderId`,
+      );
+      channel.nack(message, false, false);
+      return;
+    }
+    const { correlationId, minted } = resolveCorrelationId(data.correlationId);
     if (minted) {
       this.logger.warn(
         `No correlationId in status event for order ${data.orderId}, minted ${correlationId}`,
       );
     }
-    await correlationStorage.run({ correlationId }, () =>
-      this.appService.updateStatus(data.orderId, status),
-    );
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      try {
+        await correlationStorage.run({ correlationId }, () =>
+          this.appService.updateStatus(data.orderId, status),
+        );
+        channel.ack(message);
+        return;
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        if (!isRetryable(error) || attempt === MAX_ATTEMPTS) {
+          this.logger.error(
+            `orders rejected status event (${status}) for order ${data.orderId}: ${reason}`,
+          );
+          channel.nack(message, false, false);
+          return;
+        }
+        this.logger.warn(
+          `orders retrying status event (${status}) for order ${data.orderId}: attempt ${attempt} failed (${reason})`,
+        );
+        await sleep(RETRY_DELAY_MS);
+      }
+    }
   }
 }

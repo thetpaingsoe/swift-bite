@@ -68,4 +68,41 @@ describe('AppController order_ready ack/nack', () => {
     expect(channel.ack).not.toHaveBeenCalled();
     expect(channel.nack).toHaveBeenCalledWith(message, false, false);
   });
+
+  it('retries a transient failure then acks', async () => {
+    const transient = Object.assign(new Error('connection refused'), {
+      code: 'ECONNREFUSED',
+    });
+    appService.dispatchRider
+      .mockRejectedValueOnce(transient)
+      .mockResolvedValueOnce(undefined);
+
+    await controller.handle(validPayload, makeContext(channel, message));
+
+    expect(appService.dispatchRider).toHaveBeenCalledTimes(2);
+    expect(channel.ack).toHaveBeenCalledWith(message);
+    expect(channel.nack).not.toHaveBeenCalled();
+  });
+
+  it('rejects into the DLQ after max retries', async () => {
+    const transient = Object.assign(new Error('connection refused'), {
+      code: 'ECONNREFUSED',
+    });
+    appService.dispatchRider.mockRejectedValue(transient);
+
+    await controller.handle(validPayload, makeContext(channel, message));
+
+    expect(appService.dispatchRider).toHaveBeenCalledTimes(3);
+    expect(channel.ack).not.toHaveBeenCalled();
+    expect(channel.nack).toHaveBeenCalledWith(message, false, false);
+  });
+
+  it('sends a DB failure straight to the DLQ with a single write attempt', async () => {
+    appService.dispatchRider.mockRejectedValue(new Error('db down'));
+
+    await controller.handle(validPayload, makeContext(channel, message));
+
+    expect(appService.dispatchRider).toHaveBeenCalledTimes(1);
+    expect(channel.nack).toHaveBeenCalledWith(message, false, false);
+  });
 });

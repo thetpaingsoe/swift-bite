@@ -22,6 +22,12 @@ import {
   resolveCorrelationId,
 } from '../correlation/correlation.storage';
 import type { TicketLine } from '../db/schema';
+import {
+  MAX_ATTEMPTS,
+  RETRY_DELAY_MS,
+  isRetryable,
+  sleep,
+} from '../rmq/rmq-retry';
 
 interface OrderCreatedPayload {
   orderId: string;
@@ -54,41 +60,51 @@ export class AppController {
     const message: unknown = context.getMessage();
     const orderId =
       typeof data?.orderId === 'string' ? data.orderId : 'unknown';
-    let compensation: { orderId: string; correlationId: string } | null = null;
     try {
       this.assertOrderCreatedPayload(data);
-      const { correlationId, minted } = resolveCorrelationId(
-        data.correlationId,
-      );
-      if (minted) {
-        this.logger.warn(
-          `No correlationId in order_created for order ${data.orderId}, minted ${correlationId}`,
-        );
-      }
-      this.logger.log('kitchen received order: ' + data.orderId);
-
-      compensation = { orderId: data.orderId, correlationId };
-      await correlationStorage.run({ correlationId }, () =>
-        this.appService.createTicket({ ...data, correlationId }),
-      );
-      channel.ack(message);
     } catch (error) {
       this.logger.error(
         `kitchen rejected order_created for order ${orderId}: ${error instanceof Error ? error.message : String(error)}`,
       );
-      if (compensation) {
-        try {
-          await this.appService.failTicket(
-            compensation.orderId,
-            compensation.correlationId,
-          );
-        } catch (compensationError) {
-          this.logger.error(
-            `kitchen could not compensate order ${compensation.orderId}: ${compensationError instanceof Error ? compensationError.message : String(compensationError)}`,
-          );
-        }
-      }
       channel.nack(message, false, false);
+      return;
+    }
+    const { correlationId, minted } = resolveCorrelationId(data.correlationId);
+    if (minted) {
+      this.logger.warn(
+        `No correlationId in order_created for order ${data.orderId}, minted ${correlationId}`,
+      );
+    }
+    this.logger.log('kitchen received order: ' + data.orderId);
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      try {
+        await correlationStorage.run({ correlationId }, () =>
+          this.appService.createTicket({ ...data, correlationId }),
+        );
+        channel.ack(message);
+        return;
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        if (!isRetryable(error) || attempt === MAX_ATTEMPTS) {
+          this.logger.error(
+            `kitchen rejected order_created for order ${orderId}: ${reason}`,
+          );
+          try {
+            await this.appService.failTicket(data.orderId, correlationId);
+          } catch (compensationError) {
+            this.logger.error(
+              `kitchen could not compensate order ${data.orderId}: ${compensationError instanceof Error ? compensationError.message : String(compensationError)}`,
+            );
+          }
+          channel.nack(message, false, false);
+          return;
+        }
+        this.logger.warn(
+          `kitchen retrying order_created for order ${orderId}: attempt ${attempt} failed (${reason})`,
+        );
+        await sleep(RETRY_DELAY_MS);
+      }
     }
   }
 
