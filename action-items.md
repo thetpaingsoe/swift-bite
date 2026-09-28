@@ -16,13 +16,13 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `94 / 103 items completed (91%)`
+**Overall:** `97 / 103 items completed (94%)`
 
 ```
 Phase 1 — Foundation       [██████████]  33/33  (100%)
 Phase 2 — Operations       [██████████]  20/20 (100%)
 Phase 3 — Observability    [██████████]  13/13 (100%)
-Phase 4 — Resilience       [███░░░░░░░]  8/29  (28%)
+Phase 4 — Resilience       [████░░░░░░]  11/29  (38%)
 Phase 5 — Organization     [█░░░░░░░░░]  1/8   (13%)
 Phase 6 — Frontend         [█████░░░░░]  5/8   (62%)
 Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
@@ -30,7 +30,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** Kitchen approval workflow (hybrid kitchen-service HTTP :3012 + guard, tickets accept/complete/reject, order_failed saga to cancel, /kitchen board) live-verified | **Date:** 2026-09-12
+**Last action completed:** SEED-8 retry logic (RMQ retry rule + fetchItem wrapper, 88 tests green, live-verified) | **Date:** 2026-09-28
 
 ---
 
@@ -201,9 +201,9 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 - [x] Live-verify: poison message lands in the DLQ
 
 ### 4.2 Add retry logic (RMQ-only)
-- [ ] RMQ consumers reject failed messages so they route to the DLQ after max retries
-- [ ] Retry wrapper around the item-service fetch in orders-service (ties into 4.4)
-- [ ] No blind retries on DB writes (Neon failures are rarely transient-retryable; writes risk duplicates)
+- [x] RMQ consumers reject failed messages so they route to the DLQ after max retries (SEED-8: `src/rmq/rmq-retry.ts` per service — MAX_ATTEMPTS=3, 200ms fixed delay, retryable = conn/timeout/deadlock/serialization codes only; validation + permanent failures nack straight to DLQ; kitchen compensates only on final failure)
+- [x] Retry wrapper around the item-service fetch in orders-service (ties into 4.4) (SEED-8: `orders-service/src/orders/app.service.ts` `fetchItem` — 3 attempts/200ms on transient no-response/timeout/5xx only, 404 immediate, exhaust still throws NotFound; 4.4 owns the 503 breaker)
+- [x] No blind retries on DB writes (Neon failures are rarely transient-retryable; writes risk duplicates) (SEED-8: one DB attempt per delivery, no p-retry/inner loop; selective retry of transient conn codes only; orders `orders_queue` got manual ack/nack via `noAck:false` + `@Ctx()`, terminus is log+drop with no DLQ per 4.1)
 
 ### 4.3 Add rate limiting
 - [ ] Install `@nestjs/throttler` in orders-service

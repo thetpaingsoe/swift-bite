@@ -84,4 +84,57 @@ describe('AppController order_created ack/nack', () => {
     expect(channel.ack).not.toHaveBeenCalled();
     expect(channel.nack).toHaveBeenCalledWith(message, false, false);
   });
+
+  it('retries a transient failure then acks without compensating', async () => {
+    const transient = Object.assign(new Error('connection refused'), {
+      code: 'ECONNREFUSED',
+    });
+    appService.createTicket
+      .mockRejectedValueOnce(transient)
+      .mockResolvedValueOnce({ id: 't-1' });
+
+    await controller.handleOrderCreated(
+      validPayload,
+      makeContext(channel, message),
+    );
+
+    expect(appService.createTicket).toHaveBeenCalledTimes(2);
+    expect(appService.failTicket).not.toHaveBeenCalled();
+    expect(channel.ack).toHaveBeenCalledWith(message);
+    expect(channel.nack).not.toHaveBeenCalled();
+  });
+
+  it('rejects into the DLQ after max retries and compensates once', async () => {
+    const transient = Object.assign(new Error('connection refused'), {
+      code: 'ECONNREFUSED',
+    });
+    appService.createTicket.mockRejectedValue(transient);
+
+    await controller.handleOrderCreated(
+      validPayload,
+      makeContext(channel, message),
+    );
+
+    expect(appService.createTicket).toHaveBeenCalledTimes(3);
+    expect(appService.failTicket).toHaveBeenCalledTimes(1);
+    expect(appService.failTicket).toHaveBeenCalledWith(
+      validPayload.orderId,
+      validPayload.correlationId,
+    );
+    expect(channel.ack).not.toHaveBeenCalled();
+    expect(channel.nack).toHaveBeenCalledWith(message, false, false);
+  });
+
+  it('sends a DB failure straight to the DLQ with a single write attempt', async () => {
+    appService.createTicket.mockRejectedValue(new Error('db down'));
+
+    await controller.handleOrderCreated(
+      validPayload,
+      makeContext(channel, message),
+    );
+
+    expect(appService.createTicket).toHaveBeenCalledTimes(1);
+    expect(appService.failTicket).toHaveBeenCalledTimes(1);
+    expect(channel.nack).toHaveBeenCalledWith(message, false, false);
+  });
 });

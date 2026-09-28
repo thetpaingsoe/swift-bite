@@ -19,6 +19,7 @@ import {
   correlationStorage,
   resolveCorrelationId,
 } from '../correlation/correlation.storage';
+import { MAX_ATTEMPTS, RETRY_DELAY_MS, sleep } from '../rmq/rmq-retry';
 
 interface MenuItem {
   id: string;
@@ -233,20 +234,49 @@ export class AppService {
       'ITEM_SERVICE_URL',
       'http://localhost:3001',
     );
-    const baseUrl = await this.discovery.getServiceUrl(
-      'item-service',
-      fallback,
-    );
-    try {
-      const response = await firstValueFrom(
-        this.httpService.get<MenuItem>(`${baseUrl}/items/${menuItemId}`),
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      const baseUrl = await this.discovery.getServiceUrl(
+        'item-service',
+        fallback,
       );
-      return response.data;
-    } catch (error) {
-      if (!(error as any)?.response) {
-        this.discovery.invalidate('item-service');
+      try {
+        const response = await firstValueFrom(
+          this.httpService.get<MenuItem>(`${baseUrl}/items/${menuItemId}`),
+        );
+        return response.data;
+      } catch (error) {
+        const record = error as { response?: unknown } | null | undefined;
+        if (record && typeof record === 'object' && !record.response) {
+          this.discovery.invalidate('item-service');
+        }
+        if (!this.isTransientFetchError(error) || attempt === MAX_ATTEMPTS) {
+          throw new NotFoundException(
+            `Menu item with ID ${menuItemId} not found`,
+          );
+        }
+        this.logger.warn(
+          `Retrying item-service fetch for item ${menuItemId}: attempt ${attempt} failed`,
+        );
+        await sleep(RETRY_DELAY_MS);
       }
-      throw new NotFoundException(`Menu item with ID ${menuItemId} not found`);
     }
+    throw new NotFoundException(`Menu item with ID ${menuItemId} not found`);
+  }
+
+  private isTransientFetchError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+    const record = error as {
+      response?: { status?: unknown };
+      code?: unknown;
+    };
+    if (!record.response) {
+      return true;
+    }
+    return (
+      typeof record.response.status === 'number' &&
+      record.response.status >= 500
+    );
   }
 }

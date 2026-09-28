@@ -6,6 +6,12 @@ import {
   resolveCorrelationId,
 } from '../correlation/correlation.storage';
 import type { DispatchLine } from '../db/schema';
+import {
+  MAX_ATTEMPTS,
+  RETRY_DELAY_MS,
+  isRetryable,
+  sleep,
+} from '../rmq/rmq-retry';
 
 interface OrderReadyPayload {
   orderId: string;
@@ -37,25 +43,42 @@ export class AppController {
       typeof data?.orderId === 'string' ? data.orderId : 'unknown';
     try {
       this.assertOrderReadyPayload(data);
-      const { correlationId, minted } = resolveCorrelationId(
-        data.correlationId,
-      );
-      if (minted) {
-        this.logger.warn(
-          `No correlationId in order_ready for order ${data.orderId}, minted ${correlationId}`,
-        );
-      }
-      this.logger.log('Rider received dispatch for order : ' + data.orderId);
-
-      await correlationStorage.run({ correlationId }, () =>
-        this.appService.dispatchRider({ ...data, correlationId }),
-      );
-      channel.ack(message);
     } catch (error) {
       this.logger.error(
         `rider rejected order_ready for order ${orderId}: ${error instanceof Error ? error.message : String(error)}`,
       );
       channel.nack(message, false, false);
+      return;
+    }
+    const { correlationId, minted } = resolveCorrelationId(data.correlationId);
+    if (minted) {
+      this.logger.warn(
+        `No correlationId in order_ready for order ${data.orderId}, minted ${correlationId}`,
+      );
+    }
+    this.logger.log('Rider received dispatch for order : ' + data.orderId);
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      try {
+        await correlationStorage.run({ correlationId }, () =>
+          this.appService.dispatchRider({ ...data, correlationId }),
+        );
+        channel.ack(message);
+        return;
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        if (!isRetryable(error) || attempt === MAX_ATTEMPTS) {
+          this.logger.error(
+            `rider rejected order_ready for order ${orderId}: ${reason}`,
+          );
+          channel.nack(message, false, false);
+          return;
+        }
+        this.logger.warn(
+          `rider retrying order_ready for order ${orderId}: attempt ${attempt} failed (${reason})`,
+        );
+        await sleep(RETRY_DELAY_MS);
+      }
     }
   }
 
