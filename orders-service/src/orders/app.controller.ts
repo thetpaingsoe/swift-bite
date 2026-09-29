@@ -7,6 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { AuthGuard } from '../auth/auth.guard';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ListOrdersDto } from './dto/list-orders.dto';
 import {
@@ -33,11 +34,12 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Post()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, ThrottlerGuard)
   @ApiOperation({ summary: 'Place an order for one menu item' })
   @ApiResponse({ status: 201, description: 'Order placed, returns orderId' })
   @ApiResponse({ status: 401, description: 'Invalid token' })
   @ApiResponse({ status: 404, description: 'Menu item not found' })
+  @ApiResponse({ status: 429, description: 'Too many orders, retry later' })
   async createOrder(@Body() dto: CreateOrderDto, @Req() req: any) {
     return this.appService.createOrder(dto, req.user?.userId);
   }
