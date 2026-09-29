@@ -15,6 +15,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import Joi from 'joi';
 import { DbService } from '../db/db.service';
 import { AuthGuard } from '../auth/auth.guard';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from '../health/health.module';
 import { ConsulService } from '../consul/consul.service';
 import { DiscoveryService } from '../consul/discovery.service';
@@ -32,6 +33,8 @@ import { DiscoveryService } from '../consul/discovery.service';
         CONSUL_URL: Joi.string().default('http://localhost:8500'),
         SERVICE_NAME: Joi.string().default('orders-service'),
         SERVICE_ADDRESS: Joi.string().default('orders-service'),
+        THROTTLE_LIMIT: Joi.number().default(10),
+        THROTTLE_TTL_MS: Joi.number().default(60000),
         NODE_ENV: Joi.string()
           .valid('development', 'production', 'test')
           .default('development'),
@@ -74,6 +77,19 @@ import { DiscoveryService } from '../consul/discovery.service';
         timeout: 5000,
       }),
       inject: [ConfigService],
+    }),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: configService.get<number>('THROTTLE_TTL_MS', 60000),
+            limit: configService.get<number>('THROTTLE_LIMIT', 10),
+          },
+        ],
+        errorMessage: (_ctx, detail) =>
+          `Too many orders, retry after ${detail?.timeToExpire ?? 60}s`,
+      }),
     }),
     ClientsModule.registerAsync([
       {

@@ -206,9 +206,9 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 - [x] No blind retries on DB writes (Neon failures are rarely transient-retryable; writes risk duplicates) (SEED-8: one DB attempt per delivery, no p-retry/inner loop; selective retry of transient conn codes only; orders `orders_queue` got manual ack/nack via `noAck:false` + `@Ctx()`, terminus is log+drop with no DLQ per 4.1)
 
 ### 4.3 Add rate limiting
-- [ ] Install `@nestjs/throttler` in orders-service
-- [ ] Configure `ThrottlerModule` with sensible defaults (e.g., 10 requests/60 seconds per IP)
-- [ ] Scope to `POST /orders` (only public write endpoint; skip auth/item reads)
+- [x] Install `@nestjs/throttler` in orders-service (SEED-9: `@nestjs/throttler@6.7.1`)
+- [x] Configure `ThrottlerModule` with sensible defaults (e.g., 10 requests/60 seconds per IP) (SEED-9: `forRootAsync`, env-tunable `THROTTLE_LIMIT`=10 / `THROTTLE_TTL_MS`=60000, dynamic retry-hint error message; tunables added to `orders-service/.env.example`)
+- [x] Scope to `POST /orders` (only public write endpoint; skip auth/item reads) (SEED-9: `ThrottlerGuard` after `AuthGuard` on `POST /orders` only; service spec 4/4 green — burst→429 with `Retry-After`, GETs unaffected, window reset→201; live-verified 12 rapid orders → 10×201 + 2×429, reset→201; 4xx demoted to warn in `AllExceptionsFilter` so bursts don't spam error logs)
 
 ### 4.4 Add circuit breaker for inter-service calls
 - [ ] Install `opossum` in orders-service (verified missing 2026-09-27 despite the skill claiming it — correct the skill when done)

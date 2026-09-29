@@ -42,10 +42,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
       responseBody.message = 'Internal server error';
     }
 
-    this.logger.error(
-      `${request.method} ${request.url} ${status}`,
-      exception instanceof Error ? exception.stack : '',
-    );
+    const isClientError = status >= 400 && status < 500;
+    if (isClientError) {
+      this.logger.warn(`${request.method} ${request.url} ${status}`);
+    } else {
+      this.logger.error(
+        `${request.method} ${request.url} ${status}`,
+        exception instanceof Error ? exception.stack : '',
+      );
+    }
 
     response.status(status).json(responseBody);
   }
