@@ -80,14 +80,14 @@ NestJS 11 / TypeScript 5.7 strict / Drizzle ORM / Neon Postgres / RabbitMQ / Con
 |---------|----------|------|--------|
 | auth-service | auth_db | 3000 | ✅ Done (health, Consul, Pino, correlation honor, strict) |
 | item-service | item_db | 3001 | ✅ Done (health, Consul, Pino, correlation honor, strict) |
-| orders-service | orders_db | 3002 | ✅ Done (+ Consul discovery w/ fallback, correlation middleware + persist) |
+| orders-service | orders_db | 3002 | ✅ Done (+ Consul discovery w/ fallback, correlation middleware + persist, item-service breaker 5/30s) |
 | kitchen-service | kitchen_db | HTTP :3012 + RMQ | ✅ Done (+ hybrid HTTP API, KitchenGuard, ticket accept/complete/reject) |
 | rider-service | rider_db | RMQ + health :3011 | ✅ Done (+ Consul, Pino, correlation persist) |
 | consul | — | 8500/8600 | ✅ Dev agent in compose |
 | rabbitmq | — | 5672/15672 | ✅ |
 
 ## Current Task
-Phase 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD) plus kitchen board (/kitchen, hybrid kitchen-service :3012, accept/complete/reject). SEED-7 done: RMQ DLQs live (kitchen_queue.dlq + rider_queue.dlq, nack routing, DLQ alert logs, verified end to end). Next: 6.6 polish or Phase 4 follow-ups (4.2 retry). See action-items.md (89/94).
+Phase 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD) plus kitchen board (/kitchen, hybrid kitchen-service :3012, accept/complete/reject). SEED-7 done: RMQ DLQs live (kitchen_queue.dlq + rider_queue.dlq, nack routing, DLQ alert logs, verified end to end). SEED-10 done: item-service circuit breaker live (opossum 5/30s, fast 503, open/half-open/closed logs, unit 43/43 + live-verified outage and recovery). Next: 6.6 polish or Phase 4 follow-ups (4.6 Consul ghosts, 4.7 reconciliation). See action-items.md.
 
 ## Conventions
 - Feature tests over unit tests (every change production-ready)

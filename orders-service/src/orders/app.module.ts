@@ -35,6 +35,7 @@ import { DiscoveryService } from '../consul/discovery.service';
         SERVICE_ADDRESS: Joi.string().default('orders-service'),
         THROTTLE_LIMIT: Joi.number().default(10),
         THROTTLE_TTL_MS: Joi.number().default(60000),
+        ITEM_BREAKER_RESET_TIMEOUT_MS: Joi.number().default(30000),
         NODE_ENV: Joi.string()
           .valid('development', 'production', 'test')
           .default('development'),
