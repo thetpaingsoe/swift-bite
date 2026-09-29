@@ -211,11 +211,11 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 - [x] Scope to `POST /orders` (only public write endpoint; skip auth/item reads) (SEED-9: `ThrottlerGuard` after `AuthGuard` on `POST /orders` only; service spec 4/4 green — burst→429 with `Retry-After`, GETs unaffected, window reset→201; live-verified 12 rapid orders → 10×201 + 2×429, reset→201; 4xx demoted to warn in `AllExceptionsFilter` so bursts don't spam error logs)
 
 ### 4.4 Add circuit breaker for inter-service calls
-- [ ] Install `opossum` in orders-service (verified missing 2026-09-27 despite the skill claiming it — correct the skill when done)
-- [ ] Wrap item-service HTTP calls with circuit breaker (add HTTP timeout as part of this)
-- [ ] Configure: 5 failures → open circuit for 30s → half-open → retry
-- [ ] Return meaningful error when circuit is open (503 Service Unavailable)
-- [ ] Add circuit breaker metrics/logging for observability
+- [x] Install `opossum` in orders-service (verified missing 2026-09-27 despite the skill claiming it — correct the skill when done) (SEED-10: `opossum@10.0.0` + `@types/opossum`; skill claim now true as written — 5 failures / 30s / half-open — no edit needed)
+- [x] Wrap item-service HTTP calls with circuit breaker (add HTTP timeout as part of this) (SEED-10: breaker around `fetchItemWithRetry` in `orders-service/src/orders/app.service.ts`; explicit 5s per-attempt axios + rxjs timeout; opossum timeout 20s covers the retry budget)
+- [x] Configure: 5 failures → open circuit for 30s → half-open → retry (SEED-10: `volumeThreshold` 5 / `errorThreshold` 50% / `resetTimeout` 30s, env-tunable `ITEM_BREAKER_RESET_TIMEOUT_MS`; 4xx errorFilter so bad item ids never trip it)
+- [x] Return meaningful error when circuit is open (503 Service Unavailable) (SEED-10: `ServiceUnavailableException` "temporarily unavailable", thrown before any DB insert; unit + live verified)
+- [x] Add circuit breaker metrics/logging for observability (SEED-10: open/half-open/closed via Nest Logger → Pino with `correlationId`; logs-only, no dashboard per scope)
 
 ### 4.5 Add saga pattern (compensation)
 - [x] orders-service emits `order_created` (verified: `orders-service/src/orders/app.service.ts` emit; `correlationId` + `orderId` serve as the saga identity — separate saga ID dropped as redundant)

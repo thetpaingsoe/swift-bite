@@ -39,6 +39,10 @@ export class AppController {
   @ApiResponse({ status: 201, description: 'Order placed, returns orderId' })
   @ApiResponse({ status: 401, description: 'Invalid token' })
   @ApiResponse({ status: 404, description: 'Menu item not found' })
+  @ApiResponse({
+    status: 503,
+    description: 'Item service temporarily unavailable (circuit open)',
+  })
   @ApiResponse({ status: 429, description: 'Too many orders, retry later' })
   async createOrder(@Body() dto: CreateOrderDto, @Req() req: any) {
     return this.appService.createOrder(dto, req.user?.userId);

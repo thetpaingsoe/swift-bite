@@ -5,10 +5,13 @@ import {
   NotFoundException,
   BadGatewayException,
   ConflictException,
+  OnModuleDestroy,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
+import CircuitBreaker from 'opossum';
 import { and, count, desc, eq } from 'drizzle-orm';
 import { orderItems, orders, type Order } from '../db/schema';
 import { DbService } from '../db/db.service';
@@ -27,9 +30,16 @@ interface MenuItem {
   price: number | string;
 }
 
+const ITEM_FETCH_TIMEOUT_MS = 5000;
+const ITEM_BREAKER_VOLUME_THRESHOLD = 5;
+const ITEM_BREAKER_RESET_TIMEOUT_MS = 30000;
+const ITEM_BREAKER_ERROR_THRESHOLD = 50;
+const ITEM_BREAKER_TIMEOUT_MS = 20000;
+
 @Injectable()
-export class AppService {
+export class AppService implements OnModuleDestroy {
   private readonly logger = new Logger(AppService.name);
+  private readonly itemBreaker: CircuitBreaker<[string], MenuItem>;
 
   constructor(
     @Inject('KITCHEN_SERVICE') private readonly kitchenClient: ClientProxy,
@@ -37,7 +47,35 @@ export class AppService {
     private readonly httpService: HttpService,
     private readonly discovery: DiscoveryService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    const resetTimeout = Number(
+      this.configService.get<number>(
+        'ITEM_BREAKER_RESET_TIMEOUT_MS',
+        ITEM_BREAKER_RESET_TIMEOUT_MS,
+      ),
+    );
+    this.itemBreaker = new CircuitBreaker(
+      (menuItemId: string) => this.fetchItemWithRetry(menuItemId),
+      {
+        timeout: ITEM_BREAKER_TIMEOUT_MS,
+        errorThresholdPercentage: ITEM_BREAKER_ERROR_THRESHOLD,
+        volumeThreshold: ITEM_BREAKER_VOLUME_THRESHOLD,
+        resetTimeout:
+          Number.isFinite(resetTimeout) && resetTimeout > 0
+            ? resetTimeout
+            : ITEM_BREAKER_RESET_TIMEOUT_MS,
+        rollingCountTimeout: ITEM_BREAKER_RESET_TIMEOUT_MS,
+        errorFilter: (error: unknown) => this.isNonBreakerError(error),
+      },
+    );
+    this.itemBreaker.on('open', () => this.logBreaker('open'));
+    this.itemBreaker.on('halfOpen', () => this.logBreaker('half-open'));
+    this.itemBreaker.on('close', () => this.logBreaker('closed'));
+  }
+
+  onModuleDestroy() {
+    this.itemBreaker.shutdown();
+  }
 
   async createOrder(dto: CreateOrderDto, userId?: string) {
     const lines = await Promise.all(
@@ -230,6 +268,27 @@ export class AppService {
   }
 
   private async fetchItem(menuItemId: string): Promise<MenuItem> {
+    try {
+      return await this.itemBreaker.fire(menuItemId);
+    } catch (error) {
+      if (this.isOpenCircuitError(error)) {
+        throw new ServiceUnavailableException(
+          'Item service is temporarily unavailable, please try again shortly',
+        );
+      }
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      if (this.isTransientFetchError(error)) {
+        throw new NotFoundException(
+          `Menu item with ID ${menuItemId} not found`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  private async fetchItemWithRetry(menuItemId: string): Promise<MenuItem> {
     const fallback = this.configService.get<string>(
       'ITEM_SERVICE_URL',
       'http://localhost:3001',
@@ -241,7 +300,11 @@ export class AppService {
       );
       try {
         const response = await firstValueFrom(
-          this.httpService.get<MenuItem>(`${baseUrl}/items/${menuItemId}`),
+          this.httpService
+            .get<MenuItem>(`${baseUrl}/items/${menuItemId}`, {
+              timeout: ITEM_FETCH_TIMEOUT_MS,
+            })
+            .pipe(timeout(ITEM_FETCH_TIMEOUT_MS)),
         );
         return response.data;
       } catch (error) {
@@ -249,10 +312,13 @@ export class AppService {
         if (record && typeof record === 'object' && !record.response) {
           this.discovery.invalidate('item-service');
         }
-        if (!this.isTransientFetchError(error) || attempt === MAX_ATTEMPTS) {
+        if (!this.isTransientFetchError(error)) {
           throw new NotFoundException(
             `Menu item with ID ${menuItemId} not found`,
           );
+        }
+        if (attempt === MAX_ATTEMPTS) {
+          throw error;
         }
         this.logger.warn(
           `Retrying item-service fetch for item ${menuItemId}: attempt ${attempt} failed`,
@@ -261,6 +327,39 @@ export class AppService {
       }
     }
     throw new NotFoundException(`Menu item with ID ${menuItemId} not found`);
+  }
+
+  private isOpenCircuitError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+    const record = error as { code?: unknown; message?: unknown };
+    return (
+      record.code === 'EOPENBREAKER' ||
+      (typeof record.message === 'string' &&
+        record.message.includes('Breaker is open'))
+    );
+  }
+
+  private isNonBreakerError(error: unknown): boolean {
+    if (error instanceof NotFoundException) {
+      return true;
+    }
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+    const record = error as { response?: { status?: unknown } };
+    return (
+      typeof record.response?.status === 'number' &&
+      record.response.status >= 400 &&
+      record.response.status < 500
+    );
+  }
+
+  private logBreaker(state: string): void {
+    const correlationId = correlationStorage.getStore()?.correlationId;
+    const suffix = correlationId ? ` correlationId=${correlationId}` : '';
+    this.logger.log(`item-service circuit ${state}${suffix}`);
   }
 
   private isTransientFetchError(error: unknown): boolean {
