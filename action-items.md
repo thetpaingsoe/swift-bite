@@ -16,13 +16,13 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `97 / 103 items completed (94%)`
+**Overall:** `98 / 103 items completed (95%)`
 
 ```
 Phase 1 — Foundation       [██████████]  33/33  (100%)
 Phase 2 — Operations       [██████████]  20/20 (100%)
 Phase 3 — Observability    [██████████]  13/13 (100%)
-Phase 4 — Resilience       [████░░░░░░]  11/29  (38%)
+Phase 4 — Resilience       [████░░░░░░]  12/29  (41%)
 Phase 5 — Organization     [█░░░░░░░░░]  1/8   (13%)
 Phase 6 — Frontend         [█████░░░░░]  5/8   (62%)
 Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
@@ -30,7 +30,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** SEED-8 retry logic (RMQ retry rule + fetchItem wrapper, 88 tests green, live-verified) | **Date:** 2026-09-28
+**Last action completed:** SEED-11 rider-failure review flag (timed `needs_review` compensation, live-verified) | **Date:** 2026-09-29
 
 ---
 
@@ -223,7 +223,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 - [x] orders-service listens for `order_failed`, updates order status to `cancelled` (verified: `orders-service/src/orders/app.controller.ts` `@EventPattern('order_failed')`)
 - [x] `cancelled` status supported (verified: `list-orders.dto.ts` allows it, service guards terminal `cancelled`)
 - [x] Compensation logging for observability (verified live 2026-09-12: reject → cancel flow)
-- [ ] Handle partial failures (e.g., kitchen succeeds but rider fails)
+- [x] Handle partial failures (e.g., kitchen succeeds but rider fails) (SEED-11: timed review-flag — `orders.ready_at` stamped on `ready`, `ReviewService` sweeper flags `ready` older than `RIDER_REVIEW_AFTER_MIN`=10 as `needs_review`, `correlationId` log, late `order_dispatched` still advances to `dispatched`, duplicate kitchen events can't regress the flag; unit 9/9 + live-verified outage/flag/heal/reject)
 
 ### 4.6 Harden Consul registration (ghost prevention)
 - [ ] Point health-check URLs at the container hostname (`os.hostname()`), keep `Address` as the shared Compose name — dead incarnations go critical instead of borrowing successors' heartbeats

@@ -1,0 +1,1 @@
+CREATE INDEX "orders_status_ready_at_idx" ON "orders" USING btree ("status","ready_at");

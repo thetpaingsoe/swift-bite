@@ -5,21 +5,27 @@ import {
   timestamp,
   integer,
   numeric,
+  index,
 } from 'drizzle-orm/pg-core';
 
-export const orders = pgTable('orders', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id'),
-  customerName: varchar('customer_name', { length: 100 }).notNull(),
-  totalPrice: numeric('total_price').notNull(),
-  street: varchar('street', { length: 255 }).notNull(),
-  area: varchar('area', { length: 255 }).notNull(),
-  phone: varchar('phone', { length: 30 }),
-  note: varchar('note', { length: 255 }),
-  status: varchar('status', { length: 50 }).notNull().default('pending'),
-  correlationId: varchar('correlation_id', { length: 36 }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+export const orders = pgTable(
+  'orders',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id'),
+    customerName: varchar('customer_name', { length: 100 }).notNull(),
+    totalPrice: numeric('total_price').notNull(),
+    street: varchar('street', { length: 255 }).notNull(),
+    area: varchar('area', { length: 255 }).notNull(),
+    phone: varchar('phone', { length: 30 }),
+    note: varchar('note', { length: 255 }),
+    status: varchar('status', { length: 50 }).notNull().default('pending'),
+    readyAt: timestamp('ready_at', { withTimezone: true }),
+    correlationId: varchar('correlation_id', { length: 36 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (t) => [index('orders_status_ready_at_idx').on(t.status, t.readyAt)],
+);
 
 export const orderItems = pgTable('order_items', {
   id: uuid('id').defaultRandom().primaryKey(),

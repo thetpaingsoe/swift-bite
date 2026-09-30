@@ -233,10 +233,20 @@ export class AppService implements OnModuleDestroy {
     if (!current || current.status === 'cancelled') {
       return current;
     }
+    if (
+      current.status === 'needs_review' &&
+      (status === 'cooking' || status === 'ready')
+    ) {
+      return current;
+    }
 
     const [order] = await this.dbService.db
       .update(orders)
-      .set({ status })
+      .set(
+        status === 'ready' && current.status !== 'ready'
+          ? { status, readyAt: new Date() }
+          : { status },
+      )
       .where(eq(orders.id, orderId))
       .returning();
 
