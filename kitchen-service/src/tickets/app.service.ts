@@ -31,6 +31,17 @@ export class AppService {
     note?: string | null;
     correlationId: string;
   }) {
+    const [existing] = await this.dbService.db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.orderId, data.orderId))
+      .limit(1);
+    if (existing) {
+      this.logger.log(
+        `Duplicate order_created for order ${data.orderId}, ticket ${existing.id} already exists`,
+      );
+      return existing;
+    }
     try {
       const [ticket] = await this.dbService.db
         .insert(tickets)
@@ -49,6 +60,19 @@ export class AppService {
       this.logger.log('Ticket saved to kitchen DB : ' + ticket.id);
       return ticket;
     } catch (error) {
+      if (this.isUniqueViolation(error)) {
+        const [raced] = await this.dbService.db
+          .select()
+          .from(tickets)
+          .where(eq(tickets.orderId, data.orderId))
+          .limit(1);
+        if (raced) {
+          this.logger.log(
+            `Duplicate order_created for order ${data.orderId}, ticket ${raced.id} already exists`,
+          );
+          return raced;
+        }
+      }
       this.logger.error(
         `Failed to create ticket for order ${data.orderId}`,
         error as Error,
@@ -153,6 +177,18 @@ export class AppService {
       );
     }
     return ticket;
+  }
+
+  private isUniqueViolation(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+    const record = error as { code?: unknown; message?: unknown };
+    return (
+      record.code === '23505' ||
+      (typeof record.message === 'string' &&
+        record.message.includes('tickets_order_id_unique'))
+    );
   }
 
   private async notifyOrders(

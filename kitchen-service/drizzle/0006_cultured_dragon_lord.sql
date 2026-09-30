@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "tickets_order_id_unique" ON "tickets" USING btree ("order_id");

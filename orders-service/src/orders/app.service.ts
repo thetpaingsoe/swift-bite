@@ -110,6 +110,7 @@ export class AppService implements OnModuleDestroy {
           phone: dto.phone,
           note: dto.note ?? null,
           status: 'pending',
+          kitchenNotified: false,
           correlationId,
         })
         .returning();
@@ -130,25 +131,19 @@ export class AppService implements OnModuleDestroy {
     );
 
     try {
-      await firstValueFrom(
-        this.kitchenClient
-          .emit('order_created', {
-            orderId: order.id,
-            customerName: order.customerName,
-            lines: lines.map(({ menuItemId, itemName, quantity }) => ({
-              menuItemId,
-              itemName,
-              quantity,
-            })),
-            street: order.street,
-            area: order.area,
-            phone: order.phone,
-            note: order.note,
-            correlationId,
-          })
-          .pipe(timeout(5000)),
-      );
+      await this.emitOrderCreated(order, lines, correlationId);
       this.logger.log('Event emitted to kitchen queue');
+      try {
+        await this.dbService.db
+          .update(orders)
+          .set({ kitchenNotified: true })
+          .where(eq(orders.id, order.id));
+      } catch (error) {
+        this.logger.error(
+          `Order ${order.id} notified kitchen but the sent flag update failed, reconciler will re-emit a duplicate`,
+          error as Error,
+        );
+      }
     } catch (error) {
       this.logger.error(
         `Order ${order.id} saved but could not notify kitchen`,
@@ -157,6 +152,85 @@ export class AppService implements OnModuleDestroy {
     }
 
     return { success: true, orderId: order.id };
+  }
+
+  async emitOrderCreated(
+    order: Order,
+    lines: { menuItemId: string; itemName: string; quantity: number }[],
+    correlationId: string,
+  ) {
+    await firstValueFrom(
+      this.kitchenClient
+        .emit('order_created', {
+          orderId: order.id,
+          customerName: order.customerName,
+          lines: lines.map(({ menuItemId, itemName, quantity }) => ({
+            menuItemId,
+            itemName,
+            quantity,
+          })),
+          street: order.street,
+          area: order.area,
+          phone: order.phone,
+          note: order.note,
+          correlationId,
+        })
+        .pipe(timeout(5000)),
+    );
+  }
+
+  async reconcileUnsentOrders(): Promise<number> {
+    const unsent = await this.dbService.db
+      .select()
+      .from(orders)
+      .where(
+        and(eq(orders.status, 'pending'), eq(orders.kitchenNotified, false)),
+      );
+
+    let reemittedCount = 0;
+    for (const row of unsent) {
+      const { correlationId } = resolveCorrelationId(
+        row.correlationId ?? undefined,
+      );
+      const reemitted = await correlationStorage.run(
+        { correlationId },
+        async () => {
+          const lines = await this.dbService.db
+            .select()
+            .from(orderItems)
+            .where(eq(orderItems.orderId, row.id));
+          try {
+            await this.emitOrderCreated(row, lines, correlationId);
+          } catch (error) {
+            this.logger.error(
+              `Reconciler could not re-emit order ${row.id}`,
+              error as Error,
+            );
+            return false;
+          }
+          const [updated] = await this.dbService.db
+            .update(orders)
+            .set({ kitchenNotified: true })
+            .where(
+              and(
+                eq(orders.id, row.id),
+                eq(orders.status, 'pending'),
+                eq(orders.kitchenNotified, false),
+              ),
+            )
+            .returning({ id: orders.id });
+          if (updated) {
+            this.logger.log(`Reconciler re-emitted order ${row.id}`);
+            return true;
+          }
+          return false;
+        },
+      );
+      if (reemitted) {
+        reemittedCount += 1;
+      }
+    }
+    return reemittedCount;
   }
 
   async listOrders(
