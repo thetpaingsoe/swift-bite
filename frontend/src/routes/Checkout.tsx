@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapPin, Pencil, Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { cn } from "../lib/cn";
+import { loadCachedAddresses, saveCachedAddresses } from "../lib/cached-addresses";
 import { clearCart } from "../store/cart-slice";
 import { updateUser } from "../store/auth-slice";
 import { useAppDispatch, useAppSelector } from "../store/store";
@@ -63,11 +64,20 @@ export function Checkout() {
   }
 
   const addressesQuery = useQuery({
-    queryKey: ["addresses"],
+    queryKey: ["addresses", user?.id],
     queryFn: listAddresses,
+    retry: 2,
   });
 
-  const addresses = addressesQuery.data ?? [];
+  const liveAddresses = addressesQuery.data;
+
+  useEffect(() => {
+    if (liveAddresses) saveCachedAddresses(user?.id, liveAddresses);
+  }, [liveAddresses, user?.id]);
+
+  const cachedAddresses = liveAddresses ?? loadCachedAddresses(user?.id);
+  const stale = addressesQuery.isError && cachedAddresses.length > 0;
+  const addresses = liveAddresses ?? (stale ? cachedAddresses : []);
   const selected =
     pickedId != null
       ? (addresses.find((a) => a.id === pickedId) ?? null)
@@ -189,19 +199,53 @@ export function Checkout() {
         {addressesQuery.isPending ? (
           <div className="mt-4 h-12 animate-pulse rounded-xl bg-stone-200" />
         ) : selected ? (
-          <div className="mt-3 text-sm">
-            <p className="font-semibold text-stone-900">{selected.label}</p>
-            <p className="mt-0.5 text-stone-600">
-              {selected.street}, {selected.area}
-            </p>
-          </div>
+          <>
+            {stale && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                <p>
+                  Showing saved addresses from earlier — the address service
+                  is unavailable. You can still place your order.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  disabled={addressesQuery.isFetching}
+                  onClick={() => void addressesQuery.refetch()}
+                >
+                  {addressesQuery.isFetching ? "Retrying..." : "Retry"}
+                </Button>
+              </div>
+            )}
+            <div className="mt-3 text-sm">
+              <p className="font-semibold text-stone-900">{selected.label}</p>
+              <p className="mt-0.5 text-stone-600">
+                {selected.street}, {selected.area}
+              </p>
+            </div>
+          </>
         ) : (
-          <p className="mt-3 text-sm text-stone-500">
-            {addressesQuery.isError
-              ? "Could not load addresses."
-              : "No saved addresses yet."}{" "}
-            Pick one to deliver to.
-          </p>
+          <>
+            <p className="mt-3 text-sm text-stone-500">
+              {addressesQuery.isError
+                ? "Could not load addresses."
+                : "No saved addresses yet."}{" "}
+              Pick one to deliver to.
+            </p>
+            {addressesQuery.isError && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                disabled={addressesQuery.isFetching}
+                onClick={() => void addressesQuery.refetch()}
+              >
+                {addressesQuery.isFetching ? "Retrying..." : "Retry"}
+              </Button>
+            )}
+          </>
         )}
       </Card>
 
@@ -262,6 +306,12 @@ export function Checkout() {
               </button>
             </div>
 
+            {stale && (
+              <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                Showing saved addresses from earlier. Address changes are
+                unavailable while the address service is down.
+              </p>
+            )}
             {addressesQuery.isPending ? (
               <div className="mt-4 space-y-3">
                 {[0, 1].map((i) => (
@@ -309,7 +359,9 @@ export function Checkout() {
                           type="button"
                           variant="outline"
                           className="h-auto shrink-0 cursor-pointer gap-1 border-0 p-0 text-sm font-normal text-stone-600 hover:bg-transparent hover:text-stone-900"
+                          disabled={stale}
                           onClick={() => {
+                            if (stale) return;
                             setEditingId(editing ? null : address.id);
                             setAddingNew(false);
                           }}
@@ -318,7 +370,7 @@ export function Checkout() {
                           Edit
                         </Button>
                       </div>
-                      {editing && (
+                      {editing && !stale && (
                         <div className="mt-4 border-t border-stone-100 pt-4">
                           <AddressForm
                             key={address.id}
@@ -347,7 +399,7 @@ export function Checkout() {
               </div>
             )}
 
-            {addingNew ? (
+            {addingNew && !stale ? (
               <div className="mt-4 border-t border-stone-100 pt-4">
                 <h3 className="font-medium text-stone-900">New address</h3>
                 <div className="mt-3">
@@ -364,7 +416,9 @@ export function Checkout() {
                 type="button"
                 variant="outline"
                 className="mt-4 w-full"
+                disabled={stale}
                 onClick={() => {
+                  if (stale) return;
                   setAddingNew(true);
                   setEditingId(null);
                 }}

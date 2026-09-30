@@ -16,13 +16,13 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `113 / 145 items completed (78%)`
+**Overall:** `115 / 145 items completed (79%)`
 
 ```
 Phase 1 — Foundation       [██████████]  33/33  (100%)
 Phase 2 — Operations       [██████████]  24/24 (100%)
 Phase 3 — Observability    [██████████]  13/13 (100%)
-Phase 4 — Resilience       [████████░░]  23/29  (79%)
+Phase 4 — Resilience       [█████████░]  25/29  (86%)
 Phase 5 — Organization     [██░░░░░░░░]  2/9   (22%)
 Phase 6 — Frontend         [███████░░░]  18/26  (69%)
 Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
@@ -30,7 +30,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** SEED-12 Consul ghost-hardening (hostname health checks, consul healthy-gate, 60s re-register heartbeat, 4/4 scenarios live-verified) | **Date:** 2026-09-30
+**Last action completed:** SEED-14 checkout stale-address frontend half (localStorage per-user cache, stale read-only mode + retry, 5/5 component specs green, tsc/lint/build clean) | **Date:** 2026-09-30
 
 ---
 
@@ -236,9 +236,9 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
 - [x] Test + live-verify (service specs: flag on emit failure, reconciler re-emit with phone/note, re-emit failure keeps flag, happy-path no-op, concurrent duplicate makes no second ticket — orders 66/66, kitchen 30/30; live broker-down/up run: order saved flagged with zero tickets, sweep re-emitted exactly one ticket with phone/note intact, happy path inline; dev toggle `KITCHEN_RECONCILE_ENABLED=false` for Neon usage)
 
 ### 4.8 Checkout survives auth-service outage (added by SEED-1)
-- [ ] Cache last-known addresses client-side; offer them read-only with a stale warning when auth-service is down (today: no address to pick means no order at all)
-- [ ] Retry on the address query before falling back to cache
-- [ ] Manual verify: stop auth-service, confirm checkout still offers the cached address
+- [x] Cache last-known addresses client-side; offer them read-only with a stale warning when auth-service is down (SEED-14: localStorage per-user key, stale banner + retry action, add/edit disabled in stale mode, order button stays enabled)
+- [x] Retry on the address query before falling back to cache (SEED-14: `retry: 2` plus manual retry action; component spec pins >1 call before fallback)
+- [ ] Manual verify: stop auth-service, confirm checkout still offers the cached address (blocked end to end: orders-service verifies tokens via live auth-service, so order POST 401s and the frontend logs the buyer out — needs backend follow-up; API-level stop/restart probe done in SEED-14)
 
 ---
 
