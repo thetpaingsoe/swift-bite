@@ -16,21 +16,21 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `98 / 103 items completed (95%)`
+**Overall:** `113 / 145 items completed (78%)`
 
 ```
 Phase 1 — Foundation       [██████████]  33/33  (100%)
-Phase 2 — Operations       [██████████]  20/20 (100%)
+Phase 2 — Operations       [██████████]  24/24 (100%)
 Phase 3 — Observability    [██████████]  13/13 (100%)
-Phase 4 — Resilience       [████░░░░░░]  12/29  (41%)
-Phase 5 — Organization     [█░░░░░░░░░]  1/8   (13%)
-Phase 6 — Frontend         [█████░░░░░]  5/8   (62%)
-Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
+Phase 4 — Resilience       [████████░░]  23/29  (79%)
+Phase 5 — Organization     [██░░░░░░░░]  2/9   (22%)
+Phase 6 — Frontend         [███████░░░]  18/26  (69%)
+Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
 ```
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** SEED-11 rider-failure review flag (timed `needs_review` compensation, live-verified) | **Date:** 2026-09-29
+**Last action completed:** SEED-12 Consul ghost-hardening (hostname health checks, consul healthy-gate, 60s re-register heartbeat, 4/4 scenarios live-verified) | **Date:** 2026-09-30
 
 ---
 
@@ -226,9 +226,9 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/4   (0%)
 - [x] Handle partial failures (e.g., kitchen succeeds but rider fails) (SEED-11: timed review-flag — `orders.ready_at` stamped on `ready`, `ReviewService` sweeper flags `ready` older than `RIDER_REVIEW_AFTER_MIN`=10 as `needs_review`, `correlationId` log, late `order_dispatched` still advances to `dispatched`, duplicate kitchen events can't regress the flag; unit 9/9 + live-verified outage/flag/heal/reject)
 
 ### 4.6 Harden Consul registration (ghost prevention)
-- [ ] Point health-check URLs at the container hostname (`os.hostname()`), keep `Address` as the shared Compose name — dead incarnations go critical instead of borrowing successors' heartbeats
-- [ ] Add `depends_on: consul (service_healthy)` in compose for deterministic boot ordering
-- [ ] Add 60s re-registration heartbeat in `ConsulService` (unref'd timer, cleared in `onModuleDestroy`) — covers agent-amnesia, not ghosts
+- [x] Point health-check URLs at the container hostname (`os.hostname()`), keep `Address` as the shared Compose name — dead incarnations go critical instead of borrowing successors' heartbeats (SEED-12, all 5 services, live-verified kill+recreate)
+- [x] Add `depends_on: consul (service_healthy)` in compose for deterministic boot ordering (SEED-12, all 5 app services, live-verified boot wait)
+- [x] Add 60s re-registration heartbeat in `ConsulService` (unref'd timer, cleared in `onModuleDestroy`) — covers agent-amnesia, not ghosts (SEED-12, fresh-agent recovery 5/5 in 22s, no restarts)
 
 ### 4.7 Guaranteed `order_created` delivery
 - [ ] Flag orders whose `order_created` emit failed after the DB save (today the code only logs — the order sits `pending` forever with no ticket)

@@ -83,11 +83,11 @@ NestJS 11 / TypeScript 5.7 strict / Drizzle ORM / Neon Postgres / RabbitMQ / Con
 | orders-service | orders_db | 3002 | ✅ Done (+ Consul discovery w/ fallback, correlation middleware + persist, item-service breaker 5/30s) |
 | kitchen-service | kitchen_db | HTTP :3012 + RMQ | ✅ Done (+ hybrid HTTP API, KitchenGuard, ticket accept/complete/reject) |
 | rider-service | rider_db | RMQ + health :3011 | ✅ Done (+ Consul, Pino, correlation persist) |
-| consul | — | 8500/8600 | ✅ Dev agent in compose |
+| consul | — | 8500/8600 | ✅ Dev agent in compose (+ ghost-hardening: hostname checks, healthy-gate, 60s re-register) |
 | rabbitmq | — | 5672/15672 | ✅ |
 
 ## Current Task
-Phase 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD) plus kitchen board (/kitchen, hybrid kitchen-service :3012, accept/complete/reject). SEED-7 done: RMQ DLQs live (kitchen_queue.dlq + rider_queue.dlq, nack routing, DLQ alert logs, verified end to end). SEED-10 done: item-service circuit breaker live (opossum 5/30s, fast 503, open/half-open/closed logs, unit 43/43 + live-verified outage and recovery). Next: 6.6 polish or Phase 4 follow-ups (4.6 Consul ghosts, 4.7 reconciliation). SEED-11 done: rider-half saga live (timed `needs_review` flag, `ready_at` column, ReviewService sweeper, spec + live verified). See action-items.md.
+Phase 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD) plus kitchen board (/kitchen, hybrid kitchen-service :3012, accept/complete/reject). SEED-7 done: RMQ DLQs live (kitchen_queue.dlq + rider_queue.dlq, nack routing, DLQ alert logs, verified end to end). SEED-10 done: item-service circuit breaker live (opossum 5/30s, fast 503, open/half-open/closed logs, unit 43/43 + live-verified outage and recovery). Next: 6.6 polish or Phase 4 follow-ups (4.7 reconciliation). SEED-11 done: rider-half saga live (timed `needs_review` flag, `ready_at` column, ReviewService sweeper, spec + live verified). SEED-12 done: Consul ghost-hardening live (hostname health checks, depends_on consul healthy, 60s re-register heartbeat, 4/4 scenarios live-verified). See action-items.md.
 
 ## Conventions
 - Feature tests over unit tests (every change production-ready)

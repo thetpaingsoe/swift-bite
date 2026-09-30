@@ -1,3 +1,4 @@
+import { hostname } from 'os';
 import { ConsulService } from './consul.service';
 
 function stubConfig(values: Record<string, string | number> = {}) {
@@ -42,9 +43,10 @@ describe('ConsulService', () => {
       });
       expect(body.ID).toMatch(/^kitchen-service-.+/);
       expect(body.Check).toMatchObject({
-        HTTP: 'http://kitchen-service:3010/health',
+        HTTP: `http://${hostname()}:3010/health`,
         Interval: '10s',
       });
+      await service.onModuleDestroy();
     });
 
     it('prefers SERVICE_PORT over PORT when set', async () => {
@@ -57,7 +59,8 @@ describe('ConsulService', () => {
 
       const body = JSON.parse(fetchSpy.mock.calls[0][1].body);
       expect(body.Port).toBe(3010);
-      expect(body.Check.HTTP).toBe('http://kitchen-service:3010/health');
+      expect(body.Check.HTTP).toBe(`http://${hostname()}:3010/health`);
+      await service.onModuleDestroy();
     });
 
     it('falls back to localhost defaults when config is missing', async () => {
@@ -70,6 +73,7 @@ describe('ConsulService', () => {
       expect(url).toBe(
         'http://localhost:8500/v1/agent/service/register',
       );
+      await service.onModuleDestroy();
     });
 
     it('does not throw when Consul is unreachable', async () => {
@@ -77,6 +81,7 @@ describe('ConsulService', () => {
       const service = new ConsulService(stubConfig());
 
       await expect(service.register()).resolves.toBeUndefined();
+      await service.onModuleDestroy();
     });
 
     it('does not throw on non-OK status', async () => {
@@ -84,6 +89,7 @@ describe('ConsulService', () => {
       const service = new ConsulService(stubConfig());
 
       await expect(service.register()).resolves.toBeUndefined();
+      await service.onModuleDestroy();
     });
   });
 

@@ -41,6 +41,8 @@ services:
       CONSUL_URL: http://consul:8500
       NODE_ENV: production
     depends_on:
+      consul:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     healthcheck:
@@ -61,6 +63,8 @@ services:
       CONSUL_URL: http://consul:8500
       NODE_ENV: production
     depends_on:
+      consul:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     healthcheck:
@@ -86,6 +90,8 @@ services:
       RIDER_REVIEW_INTERVAL_MS: ${RIDER_REVIEW_INTERVAL_MS:-60000}
       RIDER_REVIEW_ENABLED: ${RIDER_REVIEW_ENABLED:-true}
     depends_on:
+      consul:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       item-service:
@@ -110,6 +116,8 @@ services:
       SERVICE_PORT: 3012
       NODE_ENV: production
     depends_on:
+      consul:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       auth-service:
@@ -128,10 +136,12 @@ services:
     environment:
       DATABASE_URL: ${RIDER_DATABASE_URL}
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-      HEALTH_PORT: 3011
+      SERVICE_PORT: 3011
       CONSUL_URL: http://consul:8500
       NODE_ENV: production
     depends_on:
+      consul:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     healthcheck:
