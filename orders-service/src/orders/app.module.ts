@@ -10,6 +10,7 @@ import { CorrelationMiddleware } from '../correlation/correlation.middleware';
 import { correlationStorage } from '../correlation/correlation.storage';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ReviewService } from './review.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import Joi from 'joi';
@@ -36,6 +37,9 @@ import { DiscoveryService } from '../consul/discovery.service';
         THROTTLE_LIMIT: Joi.number().default(10),
         THROTTLE_TTL_MS: Joi.number().default(60000),
         ITEM_BREAKER_RESET_TIMEOUT_MS: Joi.number().default(30000),
+        RIDER_REVIEW_AFTER_MIN: Joi.number().default(10),
+        RIDER_REVIEW_INTERVAL_MS: Joi.number().default(60000),
+        RIDER_REVIEW_ENABLED: Joi.boolean().default(true),
         NODE_ENV: Joi.string()
           .valid('development', 'production', 'test')
           .default('development'),
@@ -115,7 +119,14 @@ import { DiscoveryService } from '../consul/discovery.service';
     HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, DbService, AuthGuard, ConsulService, DiscoveryService],
+  providers: [
+    AppService,
+    ReviewService,
+    DbService,
+    AuthGuard,
+    ConsulService,
+    DiscoveryService,
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

@@ -87,7 +87,7 @@ NestJS 11 / TypeScript 5.7 strict / Drizzle ORM / Neon Postgres / RabbitMQ / Con
 | rabbitmq | — | 5672/15672 | ✅ |
 
 ## Current Task
-Phase 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD) plus kitchen board (/kitchen, hybrid kitchen-service :3012, accept/complete/reject). SEED-7 done: RMQ DLQs live (kitchen_queue.dlq + rider_queue.dlq, nack routing, DLQ alert logs, verified end to end). SEED-10 done: item-service circuit breaker live (opossum 5/30s, fast 503, open/half-open/closed logs, unit 43/43 + live-verified outage and recovery). Next: 6.6 polish or Phase 4 follow-ups (4.6 Consul ghosts, 4.7 reconciliation). See action-items.md.
+Phase 5.5 docs done. Phase 6 feature-complete (auth, menu, cart, checkout, tracking, admin CRUD) plus kitchen board (/kitchen, hybrid kitchen-service :3012, accept/complete/reject). SEED-7 done: RMQ DLQs live (kitchen_queue.dlq + rider_queue.dlq, nack routing, DLQ alert logs, verified end to end). SEED-10 done: item-service circuit breaker live (opossum 5/30s, fast 503, open/half-open/closed logs, unit 43/43 + live-verified outage and recovery). Next: 6.6 polish or Phase 4 follow-ups (4.6 Consul ghosts, 4.7 reconciliation). SEED-11 done: rider-half saga live (timed `needs_review` flag, `ready_at` column, ReviewService sweeper, spec + live verified). See action-items.md.
 
 ## Conventions
 - Feature tests over unit tests (every change production-ready)

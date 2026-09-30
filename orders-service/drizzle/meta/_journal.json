@@ -50,6 +50,20 @@
       "when": 1790408585892,
       "tag": "0006_gigantic_romulus",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790696720300,
+      "tag": "0007_clear_randall_flagg",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790698997350,
+      "tag": "0008_whole_banshee",
+      "breakpoints": true
     }
   ]
 }

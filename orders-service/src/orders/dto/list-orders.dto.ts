@@ -28,6 +28,13 @@ export class ListOrdersDto {
   @ApiPropertyOptional({ example: 'pending' })
   @IsOptional()
   @IsString()
-  @IsIn(['pending', 'cooking', 'ready', 'dispatched', 'cancelled'])
+  @IsIn([
+    'pending',
+    'cooking',
+    'ready',
+    'dispatched',
+    'cancelled',
+    'needs_review',
+  ])
   status?: string;
 }

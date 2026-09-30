@@ -82,6 +82,9 @@ services:
       AUTH_SERVICE_URL: http://auth-service:3000
       CONSUL_URL: http://consul:8500
       NODE_ENV: production
+      RIDER_REVIEW_AFTER_MIN: ${RIDER_REVIEW_AFTER_MIN:-10}
+      RIDER_REVIEW_INTERVAL_MS: ${RIDER_REVIEW_INTERVAL_MS:-60000}
+      RIDER_REVIEW_ENABLED: ${RIDER_REVIEW_ENABLED:-true}
     depends_on:
       rabbitmq:
         condition: service_healthy
