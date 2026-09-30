@@ -231,9 +231,9 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
 - [x] Add 60s re-registration heartbeat in `ConsulService` (unref'd timer, cleared in `onModuleDestroy`) — covers agent-amnesia, not ghosts (SEED-12, fresh-agent recovery 5/5 in 22s, no restarts)
 
 ### 4.7 Guaranteed `order_created` delivery
-- [ ] Flag orders whose `order_created` emit failed after the DB save (today the code only logs — the order sits `pending` forever with no ticket)
-- [ ] Add a reconciler (startup and/or interval) that re-emits unsent `pending` orders
-- [ ] Test + live-verify (kill broker mid-order, recover, confirm the ticket appears)
+- [x] Flag orders whose `order_created` emit failed after the DB save (SEED-13: nullable `orders.kitchen_notified`, insert-unsent-first so a crash between save and emit stays visible, set-true-after-emit in guarded write that can never 500 the buyer; migration `0009`)
+- [x] Add a reconciler (startup sweep + 30s interval with in-flight guard, `KITCHEN_RECONCILE_*` env vars in `.env.example` + compose; re-emits pending unsent rows with original phone/note/correlationId, clears flag only on success; kitchen `createTicket` idempotent via check-then-insert + unique index `tickets_order_id_unique` + 23505 race guard, migration `0006`)
+- [x] Test + live-verify (service specs: flag on emit failure, reconciler re-emit with phone/note, re-emit failure keeps flag, happy-path no-op, concurrent duplicate makes no second ticket — orders 66/66, kitchen 30/30; live broker-down/up run: order saved flagged with zero tickets, sweep re-emitted exactly one ticket with phone/note intact, happy path inline; dev toggle `KITCHEN_RECONCILE_ENABLED=false` for Neon usage)
 
 ### 4.8 Checkout survives auth-service outage (added by SEED-1)
 - [ ] Cache last-known addresses client-side; offer them read-only with a stale warning when auth-service is down (today: no address to pick means no order at all)

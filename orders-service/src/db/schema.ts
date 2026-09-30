@@ -5,6 +5,7 @@ import {
   timestamp,
   integer,
   numeric,
+  boolean,
   index,
 } from 'drizzle-orm/pg-core';
 
@@ -21,6 +22,7 @@ export const orders = pgTable(
     note: varchar('note', { length: 255 }),
     status: varchar('status', { length: 50 }).notNull().default('pending'),
     readyAt: timestamp('ready_at', { withTimezone: true }),
+    kitchenNotified: boolean('kitchen_notified'),
     correlationId: varchar('correlation_id', { length: 36 }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },

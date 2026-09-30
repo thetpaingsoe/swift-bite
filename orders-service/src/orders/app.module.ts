@@ -10,6 +10,7 @@ import { CorrelationMiddleware } from '../correlation/correlation.middleware';
 import { correlationStorage } from '../correlation/correlation.storage';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ReconcileService } from './reconcile.service';
 import { ReviewService } from './review.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -40,6 +41,8 @@ import { DiscoveryService } from '../consul/discovery.service';
         RIDER_REVIEW_AFTER_MIN: Joi.number().default(10),
         RIDER_REVIEW_INTERVAL_MS: Joi.number().default(60000),
         RIDER_REVIEW_ENABLED: Joi.boolean().default(true),
+        KITCHEN_RECONCILE_INTERVAL_MS: Joi.number().default(30000),
+        KITCHEN_RECONCILE_ENABLED: Joi.boolean().default(true),
         NODE_ENV: Joi.string()
           .valid('development', 'production', 'test')
           .default('development'),
@@ -121,6 +124,7 @@ import { DiscoveryService } from '../consul/discovery.service';
   controllers: [AppController],
   providers: [
     AppService,
+    ReconcileService,
     ReviewService,
     DbService,
     AuthGuard,

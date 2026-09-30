@@ -43,6 +43,13 @@
       "when": 1790408611133,
       "tag": "0005_real_cable",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790776252809,
+      "tag": "0006_cultured_dragon_lord",
+      "breakpoints": true
     }
   ]
 }
