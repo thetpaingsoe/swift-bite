@@ -16,7 +16,7 @@ Dispatches store line snapshots as JSON (`items`), matching kitchen tickets.
 |-----|-------|
 | `DATABASE_URL` | `rider_db` connection string (least-privilege role) |
 | `RABBITMQ_URL` | broker URL |
-| `HEALTH_PORT` | default 3011 |
+| `SERVICE_PORT` | default 3011 |
 | `NODE_ENV` | `development` pretty logs, `production` JSON logs |
 
 ## Scripts
