@@ -99,11 +99,13 @@ Rollback is a new migration, never edit an applied one. See
 
 | Service | Table | Purpose |
 |---------|-------|---------|
-| auth-service | `users` | id, name, email, password_hash, created_at |
+| auth-service | `users` | id, name, email, password_hash, role, created_at |
 | item-service | `categories`, `menu_items` | menu catalog + items |
-| orders-service | `orders` | id, customer_name, item snapshot, quantity, total, address, status, correlation_id |
-| kitchen-service | `tickets` | id, order_id, item details, status, correlation_id |
-| rider-service | `dispatches` | id, order_id, item details, status, correlation_id |
+| orders-service | `orders`, `order_items` | order header + per-line snapshots, status, ready_at, kitchen_notified, correlation_id |
+| kitchen-service | `tickets` | id, order_id, line snapshots, contact, status, correlation_id |
+| rider-service | `dispatches` | id, order_id, line snapshots, contact, status, correlation_id |
+
+Full column list and relationships: [database-schema.md](./database-schema.md).
 
 ## Notes
 

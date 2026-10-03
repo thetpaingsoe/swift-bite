@@ -20,16 +20,24 @@ Each service runs the same `ConsulService` (`src/consul/consul.service.ts` in ev
 service):
 
 1. **Register after `listen()`** in `main.ts`. The service must be answering requests
-   before it advertises itself, otherwise the health check fails immediately.
+   before it advertises itself, otherwise the health check fails immediately. Compose
+   also gates boot order: app services declare `depends_on: consul (service_healthy)`,
+   so they start only once Consul is healthy.
 2. **Service ID** is `name + hostname`. Two containers of the same service get
    distinct IDs, which is what stops them from overwriting each other.
-3. **HTTP check** hits `/health` every 10 seconds. Consul only returns instances
-   that pass this check to callers.
+3. **HTTP check** hits `/health` every 10 seconds on the **container hostname**
+   (`Check.HTTP` uses `os.hostname()`), while the registered `Address` stays the
+   shared Compose name. Dead incarnations go critical instead of borrowing a
+   successor's heartbeat. Consul only returns instances that pass this check.
 4. **`DeregisterCriticalServiceAfter: 1m`**. If a container dies and never
    deregisters (crash, kill -9), Consul purges its entry a minute after health
    checks start failing. This is what clears ghosts automatically.
 5. **Deregister in `onModuleDestroy`**. Graceful shutdown removes the entry
    immediately, so healthy restarts leave no stale records.
+6. **60s re-registration heartbeat**. Every service re-PUTs its registration on an
+   unref'd timer (cleared on shutdown). If the Consul agent restarts and loses its
+   in-memory catalog, services reappear within about a minute with no container
+   restarts.
 
 Registration is fire and forget. On failure it logs a warning and moves on, because
 a down registry should never take the whole service down.
@@ -103,9 +111,9 @@ open http://localhost:8500/ui
 
 ## Inside Docker vs local dev
 
-In Docker Compose, services reach each other by container hostname, so
-`SERVICE_ADDRESS` is the Compose service name (`item-service`) and the health
-check URL works. On a plain local run each service registers with `localhost`.
+In Docker Compose, the registered `Address` is the Compose service name
+(`item-service`) so peers reach it by DNS, while the health check URL uses the
+container hostname (`os.hostname()`). On a plain local run both are `localhost`.
 
 Both register the same way. The difference is only what `SERVICE_ADDRESS` resolves
 to, which is why it is configurable rather than hardcoded.

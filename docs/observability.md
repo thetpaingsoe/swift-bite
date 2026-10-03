@@ -63,7 +63,8 @@ the header — e.g. a frontend session ID).
 `kitchen_queue.dlq` / `rider_queue.dlq` (default exchange, routing key =
 DLQ name). Consumers run with `noAck: false`: success acks, any failure
 nacks without requeue, so poison messages land in the DLQ instead of
-retrying forever or vanishing.
+retrying forever or vanishing. Transient failures get up to 3 attempts (200ms)
+first; permanent ones nack immediately — see [resilience.md](./resilience.md).
 
 Each DLQ has a dedicated consumer (kitchen owns `kitchen_queue.dlq`,
 rider owns `rider_queue.dlq`) that logs one error line per message and
@@ -89,7 +90,7 @@ no trustworthy `orderId` to compensate.
 | auth-service :3000 | `/health` | Neon |
 | item-service :3001 | `/health` | Neon |
 | orders-service :3002 | `/health` | Neon + RMQ |
-| kitchen-service :3010 | `/health` | Neon + RMQ |
+| kitchen-service :3012 | `/health` | Neon + RMQ |
 | rider-service :3011 | `/health` | Neon + RMQ |
 
 Consul polls these every 10s as its service health checks — the same endpoints that

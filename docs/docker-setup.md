@@ -43,7 +43,7 @@ This starts:
 | auth-service | 3000 | User registration/login |
 | item-service | 3001 | Menu browsing |
 | orders-service | 3002 | Order placement |
-| kitchen-service | 3010 | RMQ consumer, health endpoint only |
+| kitchen-service | 3012 | HTTP API + RMQ consumer, Swagger |
 | rider-service | 3011 | RMQ consumer, health endpoint only |
 
 ## 3. Verify services are running
@@ -67,7 +67,7 @@ curl http://localhost:3000/health/readiness
 curl http://localhost:3002/health/readiness
 
 # Kitchen/Rider health (separate ports)
-curl http://localhost:3010/health
+curl http://localhost:3012/health
 curl http://localhost:3011/health
 ```
 
@@ -219,11 +219,14 @@ curl http://localhost:15672
 ```
 
 **Port conflicts:**
-If ports 3000-3002 or 3010-3011 are in use, stop local processes or change ports in `docker-compose.yml`.
+If ports 3000-3002 or 3011-3012 are in use, stop local processes or change ports in `docker-compose.yml`.
 
 **Empty Consul catalog after restart:**
-Services register once at boot — if they booted while Consul was down they stay
-unregistered (boot never fails on directory outage, by design). Restart them:
+Services register at boot and then re-register on a 60s heartbeat, so a fresh
+Consul agent (which starts with an empty in-memory catalog) self-heals within
+about a minute — no container restarts needed. Boot never fails on a directory
+outage, by design. If you want the catalog repopulated immediately instead of
+waiting for the next heartbeat:
 
 ```bash
 docker-compose restart auth-service item-service orders-service kitchen-service rider-service

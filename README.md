@@ -13,6 +13,9 @@ microservice backend. Orders flow through a real event pipeline: placed → acce
 - Order history with status filter tabs and server-side pagination
 - Order detail with live status polling and a progress timeline
 - Cancel pending orders
+- Checkout stays usable when auth-service is down: last-known addresses served
+  read-only from a local cache with a stale warning and a retry action, so ordering
+  still works
 - Admin panel: dashboard stats, category CRUD, item CRUD with image and availability
 - Kitchen board: ticket queue with accept, complete, and reject actions
 - Role gating (admin, kitchen, customer), shared profile menu, responsive layout
@@ -25,6 +28,10 @@ microservice backend. Orders flow through a real event pipeline: placed → acce
 - kitchen-service: hybrid HTTP API + RMQ consumer; staff accept, complete, or reject tickets
 - rider-service: RMQ consumer assigning riders and recording dispatches
 - RabbitMQ event flow with a status queue that advances orders without sync calls
+- Resilience: circuit breaker on item lookups (fast `503`), retry plus dead-letter
+  queues for poison messages, a rate-limited checkout, saga compensation when the
+  kitchen rejects, and a reconciler that guarantees kitchen delivery — see
+  [resilience.md](./docs/resilience.md)
 - Consul service discovery with healthy-instance filtering and static fallback
 - End-to-end correlation IDs, Pino structured JSON logs, Swagger docs per service
 - Graceful shutdown, liveness and readiness health checks
@@ -63,8 +70,10 @@ dynamically at request time, and the rest are reached through queues — see
 Orders are human gated in the kitchen: `pending` (awaiting approval) → `cooking`
 (accepted) → `ready` (completed) → `dispatched` (rider), advanced by events on
 `orders_queue`. `cancelled` is terminal, from the customer while pending or from a
-kitchen reject before ready. One checkout is one order with its own line items —
-see [database-schema.md](./docs/database-schema.md).
+kitchen reject before ready; a `ready` order with no dispatch is flagged
+`needs_review` for a human. One checkout is one order with its own line items —
+see [database-schema.md](./docs/database-schema.md) and
+[resilience.md](./docs/resilience.md).
 
 ## Preview
 
@@ -108,6 +117,7 @@ Key endpoints: `POST /auth/register`, `POST /auth/login`, `GET /categories`,
 | [API Collections](./docs/api-collections/) | Postman API collections |
 | [API Docs (Swagger)](./docs/swagger.md) | Interactive docs, bearer auth flow |
 | [Service Discovery](./docs/service-discovery.md) | Consul setup, registration, discovery |
+| [Resilience](./docs/resilience.md) | Circuit breaker, retry, DLQs, rate limiting, saga compensation, guaranteed delivery |
 | [Observability](./docs/observability.md) | JSON logging, correlation IDs, tracing an order |
 
 ## Quick Start

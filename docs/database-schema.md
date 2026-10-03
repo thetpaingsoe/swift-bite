@@ -55,9 +55,15 @@ One checkout is one order. The header carries totals and status, the lines carry
 | `total_price` | numeric | not null, sum of line totals, calculated by backend |
 | `street` | varchar(255) | not null, delivery address |
 | `area` | varchar(255) | not null, delivery area/ward |
+| `phone` | varchar(30) | nullable, customer contact |
+| `note` | varchar(255) | nullable, delivery note |
 | `status` | varchar(50) | not null, default `pending`; see lifecycle below |
+| `ready_at` | timestamptz | nullable, stamped once when the status first becomes `ready` |
+| `kitchen_notified` | boolean | nullable, false until the `order_created` emit succeeds; the reconciler re-emits false rows |
 | `correlation_id` | varchar(36) | nullable, end-to-end trace ID (NULL on pre-feature rows) |
 | `created_at` | timestamptz | default now() |
+
+Index: `orders_status_ready_at_idx` on `(status, ready_at)` backs the review sweeper.
 
 ### `order_items`
 
@@ -71,8 +77,10 @@ One checkout is one order. The header carries totals and status, the lines carry
 | `quantity` | int | not null, min 1 |
 
 **Order status lifecycle** (advanced by RMQ events on `orders_queue`):
-`pending` → `cooking` → `ready` → `dispatched`, with `cancelled` as the terminal
-user-cancelled state. Late events never revive a cancelled order.
+`pending` → `cooking` → `ready` → `dispatched`. `cancelled` is terminal (buyer
+cancel while pending, or kitchen reject before ready); `needs_review` flags a
+`ready` order with no dispatch after `RIDER_REVIEW_AFTER_MIN` (default 10) minutes.
+Late events never revive a cancelled order.
 
 **Key decisions:**
 - Backend fetches each item from item-service and calculates prices (never trust client)
@@ -89,6 +97,8 @@ user-cancelled state. Late events never revive a cancelled order.
 | `items` | jsonb | not null, array of `{ menuItemId?, itemName, quantity }` snapshots |
 | `street` | varchar(255) | not null |
 | `area` | varchar(255) | not null |
+| `phone` | varchar(30) | nullable, customer contact |
+| `note` | varchar(255) | nullable, delivery note |
 | `status` | varchar(50) | not null, default `received`; one of `received`, `cooking`, `ready`, `rejected` |
 | `correlation_id` | varchar(36) | nullable, forwarded from `order_created` |
 | `created_at` | timestamptz | default now() |
@@ -96,7 +106,8 @@ user-cancelled state. Late events never revive a cancelled order.
 Ticket status is driven by kitchen staff: `received` → `cooking` (accept) →
 `ready` (complete), or `rejected` (cancel the order). Line snapshots live as JSON
 because tickets are write-once, read-whole. Legacy rows carry items without
-`menuItemId`.
+`menuItemId`. The `tickets_order_id_unique` index on `order_id` makes re-delivered
+`order_created` events idempotent (check-then-insert plus a 23505 race guard).
 
 ## rider-service — `dispatches`
 
@@ -108,6 +119,8 @@ because tickets are write-once, read-whole. Legacy rows carry items without
 | `items` | jsonb | not null, array of `{ menuItemId?, itemName, quantity }` snapshots |
 | `street` | varchar(255) | not null |
 | `area` | varchar(255) | not null |
+| `phone` | varchar(30) | nullable, customer contact |
+| `note` | varchar(255) | nullable, delivery note |
 | `status` | varchar(50) | not null, default `dispatched` (field is `riderStatus` in code) |
 | `correlation_id` | varchar(36) | nullable, forwarded from `order_ready` |
 | `created_at` | timestamptz | default now() |
