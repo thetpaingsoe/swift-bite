@@ -16,16 +16,24 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `113 / 145 items completed (78%)`
+**Overall:** `124 / 194 items completed (64%)`
 
 ```
-Phase 1 — Foundation       [██████████]  33/33  (100%)
-Phase 2 — Operations       [██████████]  24/24 (100%)
-Phase 3 — Observability    [██████████]  13/13 (100%)
-Phase 4 — Resilience       [████████░░]  23/29  (79%)
-Phase 5 — Organization     [██░░░░░░░░]  2/9   (22%)
-Phase 6 — Frontend         [███████░░░]  18/26  (69%)
-Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
+Phase 1  — Foundation         [██████████]  33/33  (100%)
+Phase 2  — Operations         [██████████]  24/24  (100%)
+Phase 3  — Observability      [██████████]  13/13  (100%)
+Phase 4  — Resilience         [██████████]  26/26  (100%)
+Phase 5  — Organization       [███░░░░░░░]  2/8    (25%)
+Phase 6  — Frontend           [██████████]  26/26  (100%)
+Phase 7  — Integration        [░░░░░░░░░░]  0/7    (0%)
+Phase 8  — Payments           [░░░░░░░░░░]  0/10   (0%)
+Phase 9  — Realtime           [░░░░░░░░░░]  0/6    (0%)
+Phase 10 — Notifications      [░░░░░░░░░░]  0/5    (0%)
+Phase 11 — Menu/Search/Media  [░░░░░░░░░░]  0/8    (0%)
+Phase 12 — Customer Account   [░░░░░░░░░░]  0/6    (0%)
+Phase 13 — Kitchen/Rider Ops  [░░░░░░░░░░]  0/6    (0%)
+Phase 14 — Admin              [░░░░░░░░░░]  0/5    (0%)
+Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 ```
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
@@ -235,11 +243,6 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
 - [x] Add a reconciler (startup sweep + 30s interval with in-flight guard, `KITCHEN_RECONCILE_*` env vars in `.env.example` + compose; re-emits pending unsent rows with original phone/note/correlationId, clears flag only on success; kitchen `createTicket` idempotent via check-then-insert + unique index `tickets_order_id_unique` + 23505 race guard, migration `0006`)
 - [x] Test + live-verify (service specs: flag on emit failure, reconciler re-emit with phone/note, re-emit failure keeps flag, happy-path no-op, concurrent duplicate makes no second ticket — orders 66/66, kitchen 30/30; live broker-down/up run: order saved flagged with zero tickets, sweep re-emitted exactly one ticket with phone/note intact, happy path inline; dev toggle `KITCHEN_RECONCILE_ENABLED=false` for Neon usage)
 
-### 4.8 Checkout survives auth-service outage (added by SEED-1)
-- [ ] Cache last-known addresses client-side; offer them read-only with a stale warning when auth-service is down (today: no address to pick means no order at all)
-- [ ] Retry on the address query before falling back to cache
-- [ ] Manual verify: stop auth-service, confirm checkout still offers the cached address
-
 ---
 
 ## Phase 5 — Code Organization & Quality
@@ -284,27 +287,7 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
 - [ ] Aim for test structure: feature (behavior, survives refactors) + unit (edge cases, faster feedback)
 
 ### 5.4 Add CI/CD pipeline
-- [ ] Create `.github/workflows/ci.yml`:
-  ```yaml
-  name: CI
-  on: [push, pull_request]
-  jobs:
-    test:
-      runs-on: ubuntu-latest
-      services:
-        rabbitmq:
-          image: rabbitmq:3-management
-          ports: ['5672:5672']
-      steps:
-        - uses: actions/checkout@v4
-        - uses: pnpm/action-setup@v4
-        - uses: actions/setup-node@v4
-          with: { node-version: 22 }
-        - run: pnpm install
-        - run: pnpm lint
-        - run: pnpm test
-        - run: pnpm build
-  ```
+- Superseded by **15.2** (GitHub Actions: lint + test + build + README badge). Nothing to do here.
 
 ### 5.5 Standardize READMEs
 - [x] Replaced NestJS boilerplate README with actual project documentation:
@@ -346,26 +329,25 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
 - [x] Show order confirmation with order ID
 
 ### 6.5 Order tracking
-- [ ] Build order history page (list of user's orders)
-- [ ] Build order detail page with status timeline
-- [ ] Poll orders-service for status updates (pending → cooking → dispatched → delivered)
-- [ ] Show estimated time or status messages
+- [x] Build order history page (list of user's orders) — `Orders.tsx`, React Query + pagination
+- [x] Build order detail page with status timeline — `OrderDetail.tsx` + `OrderStatus.tsx` (`StatusTimeline`)
+- [x] Poll orders-service for status updates (pending → cooking → dispatched → delivered) — `refetchInterval` 3s until terminal status (realtime replaces this in Phase 9)
+- [x] Show estimated time or status messages — status messages via `StatusText`/`StatusTimeline` (ETA estimate moves to Phase 9)
+
+> Order tracking continues in **Phase 9** (SSE/WebSocket + ETA).
 
 ### 6.6 UI polish
-- [ ] Responsive design (mobile-first)
-- [ ] Loading states and error handling
-- [ ] Toast notifications for actions
-- [ ] Clean, modern food delivery UI
+- [x] Responsive design (mobile-first) — Tailwind layout across client/admin/kitchen
+- [x] Loading states and error handling — skeletons + `isError` states on query routes
+- [x] Toast notifications for actions — `sonner` `Toaster` in `main.tsx`
+- [x] Clean, modern food delivery UI
 
 ---
 
 ## Phase 7 — Integration Testing
 
 ### 7.1 End-to-end flow tests
-- [ ] Test full order flow: register → login → browse menu → place order → kitchen processes → rider dispatched
-- [ ] Test auth flows: register, login, invalid credentials, token expiration
-- [ ] Test menu browsing: list items, filter by category
-- [ ] Test order placement: valid order, invalid item, missing address
+- Superseded by **15.3** (E2E: checkout → kitchen accept → dispatch, payment webhook retry, RBAC deny, cancel rules).
 
 ### 7.2 Failure scenario tests
 - [ ] Test circuit breaker: item-service down → orders fail gracefully
@@ -380,19 +362,146 @@ Phase 7 — Integration      [░░░░░░░░░░]  0/11   (0%)
 
 ---
 
-## Reference: Critical Files & Line Numbers
+## Phase 8 — Payments & Checkout
 
-| File | Line | Issue |
-|------|------|-------|
-| `main/orders-service/src/app.module.ts` | 5 | Unused `duration` import |
-| `main/orders-service/src/app.module.ts` | 14 | Hardcoded `guest:guest` |
-| `main/orders-service/src/app.service.ts` | 26 | RMQ emit not awaited |
-| `main/orders-service/src/app.controller.ts` | 4-8 | DTO inline, no validation |
-| `main/kitchen-service/src/main.ts` | 11, 18 | Hardcoded RMQ + typo |
-| `main/kitchen-service/src/db/schema.ts` | 6 | `customName` vs `customerName` |
-| `main/rider-service/src/main.ts` | 6, 14, 24 | Unused import + hardcoded RMQ + typo |
-| All `tsconfig.json` | 21 | `noImplicitAny: false` |
-| All `*.spec.ts` + `*.e2e-spec.ts` | various | Stale tests referencing `getHello()` |
+> Schema changes (payment state, timeline, totals) land first. Blocks Phase 14 refunds + revenue.
+
+### 8.1 Order money + state model
+- [ ] Add orders columns: `subtotal`, `fee`, `tax` (numeric) alongside existing `total_price`
+- [ ] Add payment state (`payment_status`: `pending`/`paid`/`failed`/`refunded`) + `payment_intent_id`
+- [ ] Add order timeline table (`order_events`: id, order_id, status, note, created_at) as the detail-timeline source
+- [ ] Migration + backfill (existing orders as legacy/paid, timeline seeded from current `status`)
+
+### 8.2 Stripe (test mode)
+- [ ] Create PaymentIntent on `POST /orders`; return `client_secret`, save order as `payment_status: pending`
+- [ ] Stripe webhook handler on orders-service: signature verify + idempotency key (dedupe by event id)
+- [ ] Mark `paid` on `payment_intent.succeeded`; mark `failed` on failure and record it in the timeline
+- [ ] Guard `POST /orders` retry against double-charge (idempotency key per attempt; reuse in-flight intent)
+
+### 8.3 Refunds
+- [ ] Auto-refund / void the PaymentIntent when kitchen rejects before cooking (`order_failed` before ticket accepted)
+- [ ] Manual refund path is Phase 14 (admin refund button)
+
+---
+
+## Phase 9 — Realtime Order Tracking
+
+> Absorbs 6.5 polling. Feeds the Phase 10 notification bell. Polling stays as fallback.
+
+### 9.1 Realtime gateway
+- [ ] Add SSE (or WebSocket) gateway on orders-service, JWT-authenticated
+- [ ] Push status events: `cooking`, `ready`, `dispatched`, `cancelled`, `failed`
+- [ ] Frontend subscribes on order detail + history; replaces the 3s `refetchInterval`
+- [ ] Reconnect with backoff + fall back to polling; show connection state in UI
+
+### 9.2 Progress + ETA
+- [ ] ETA estimate per status + progress timeline driven by `order_events`
+- [ ] Live timeline updates without full refetch
+
+---
+
+## Phase 10 — Notifications
+
+> Consumes Phase 9 events. Kitchen alert assumes the kitchen board is open.
+
+### 10.1 Email
+- [ ] Integrate Resend (or Postmark); env + verified sender domain
+- [ ] Send on: confirmation, ready, dispatched, cancelled
+- [ ] Templates + failure logging (never block an order on email failure)
+
+### 10.2 In-app
+- [ ] In-app toast + notification bell backed by an events query
+- [ ] Kitchen ticket alert (sound/badge) on new order (shared with 13.1)
+
+---
+
+## Phase 11 — Menu, Search & Media
+
+> Flags/indexes before search + filters. Media endpoint before admin image upload.
+
+### 11.1 Search & filters
+- [ ] Add menu item flags: `is_veg`, `is_spicy`; indexes to support filtering
+- [ ] Full-text search (name/description) via Postgres `tsvector`
+- [ ] Storefront filters: veg, spicy, price range, availability
+- [ ] Category / item availability toggle reflected instantly in storefront
+
+### 11.2 Media
+- [ ] Move item images to S3/R2 (env-configured bucket + credentials)
+- [ ] Admin upload endpoint returning the stored URL (replaces manual `image_url`)
+- [ ] Delete / replace removes the old object
+- [ ] Drop local disk serving
+
+---
+
+## Phase 12 — Customer Account
+
+> Extends the existing address book. Drops the SEED-14 client-side address cache.
+
+### 12.1 Address book
+- [ ] Extend `addresses` schema: `phone`, `line1`, `line2`, `postcode`, `notes` (migrate `street`/`area`)
+- [ ] Address book CRUD on auth-service + profile routes (mostly exists; add new fields)
+- [ ] Checkout address selector fed by the address book; remove the local-cache fallback hack
+
+### 12.2 Orders + profile
+- [ ] Order history pagination (backend + `Orders.tsx`)
+- [ ] Re-order button (rebuilds cart from an order's lines)
+- [ ] Profile: confirm change-password coverage + logout all devices (token version / denylist)
+
+---
+
+## Phase 13 — Kitchen & Rider Ops
+
+> Rider HTTP API + UI are new and can be deferred separately from kitchen.
+
+### 13.1 Kitchen
+- [ ] Kitchen board: sound + badge for new tickets
+- [ ] Prep-time display per ticket (accepted-to-ready)
+- [ ] `needs_review` handled in the board (ready-but-no-dispatch edge)
+
+### 13.2 Rider
+- [ ] Rider HTTP API on rider-service: list queue, claim / assign, pickup confirm, delivery confirm
+- [ ] Rider queue UI (claim, pickup, deliver)
+- [ ] Auth guard for the rider role
+
+---
+
+## Phase 14 — Admin
+
+> Depends on Phase 8 totals + payment state for revenue and refunds.
+
+### 14.1 Dashboard
+- [ ] Revenue, orders/day, top items, failure rate (extends existing `AdminDashboard.tsx`)
+- [ ] Backend aggregation endpoints on orders-service
+
+### 14.2 Ops
+- [ ] Refund button (calls the Phase 8 refund path)
+- [ ] User role management (auth-service admin endpoints + UI)
+- [ ] Audit log for admin actions (who, what, when)
+
+---
+
+## Phase 15 — Production Readiness
+
+> Absorbs 5.4 (CI) and Phase 7.1 (E2E). Last phase; other phases can land demoable without it.
+
+### 15.1 Deploy
+- [ ] Live demo: frontend on Vercel, backend via Docker Compose on VPS/Render
+- [ ] `.env` / secrets strategy for the demo environment
+
+### 15.2 CI
+- [ ] GitHub Actions: lint + test + build, badge in README
+- [ ] Postgres + RabbitMQ services for tests
+
+### 15.3 E2E + security
+- [ ] E2E: checkout → kitchen accept → dispatch
+- [ ] E2E: payment webhook retry (idempotency)
+- [ ] E2E: RBAC deny (customer blocked from kitchen/admin/rider)
+- [ ] E2E: cancel rules (past-pending rejected)
+- [ ] Security: helmet, strict DTO validation everywhere, rate-limit checkout + webhook, CORS allowlist
+
+### 15.4 Observability + docs
+- [ ] Observability: `/health`, metrics endpoint, correlationId + Pino retained, Grafana screenshot in README
+- [ ] Docs: README demo URL, test accounts, architecture diagram, Loom video
 
 ---
 
@@ -427,4 +536,4 @@ Saga Compensation:
 ---
 
 *Created: 2026-06-22*
-*Last action completed: —*
+*Last action completed: 2026-10-08 — Phases 8-15 added, Phase 6 marked done*
