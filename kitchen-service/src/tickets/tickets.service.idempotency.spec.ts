@@ -8,9 +8,10 @@ dotenv.config({
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { of } from 'rxjs';
 import { count, eq } from 'drizzle-orm';
-import { AppService } from './app.service';
+import { TicketsService } from './tickets.service';
+import { RiderClientService } from '../rider-client/rider-client.service';
+import { OrdersClientService } from '../orders-client/orders-client.service';
 import { DbService } from '../db/db.service';
 import { tickets } from '../db/schema';
 
@@ -24,13 +25,13 @@ const describeDb = hasTestDb ? describe : describe.skip;
 
 describeDb('createTicket idempotency on orderId', () => {
   let moduleFixture: TestingModule;
-  let service: AppService;
+  let service: TicketsService;
   let dbService: DbService;
   const orderId = '550e8400-e29b-41d4-a716-446655440099';
   const createdTicketIds: string[] = [];
 
-  const riderClient = { emit: jest.fn(() => of({})) };
-  const ordersClient = { emit: jest.fn(() => of({})) };
+  const riderClientService = { emitOrderReady: jest.fn(), connect: jest.fn() };
+  const ordersClientService = { notifyOrders: jest.fn(), connect: jest.fn() };
   const config = {
     get: (key: string, fallback?: string) => process.env[key] ?? fallback,
   };
@@ -49,15 +50,15 @@ describeDb('createTicket idempotency on orderId', () => {
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
       providers: [
-        AppService,
+        TicketsService,
         DbService,
-        { provide: 'RIDER_SERVICE', useValue: riderClient },
-        { provide: 'ORDERS_SERVICE', useValue: ordersClient },
+        { provide: RiderClientService, useValue: riderClientService },
+        { provide: OrdersClientService, useValue: ordersClientService },
         { provide: ConfigService, useValue: config },
       ],
     }).compile();
 
-    service = moduleFixture.get<AppService>(AppService);
+    service = moduleFixture.get<TicketsService>(TicketsService);
     dbService = moduleFixture.get<DbService>(DbService);
   });
 

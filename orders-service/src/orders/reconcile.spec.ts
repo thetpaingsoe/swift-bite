@@ -9,9 +9,10 @@ dotenv.config({
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { eq } from 'drizzle-orm';
-import { AppService } from './app.service';
+import { OrdersService } from './orders.service';
+import { KitchenClientService } from '../kitchen-client/kitchen-client.service';
 import { DbService } from '../db/db.service';
 import { DiscoveryService } from '../consul/discovery.service';
 import { orderItems, orders } from '../db/schema';
@@ -26,7 +27,7 @@ const describeDb = hasTestDb ? describe : describe.skip;
 
 describeDb('order_created guaranteed delivery', () => {
   let moduleFixture: TestingModule;
-  let service: AppService;
+  let service: OrdersService;
   let dbService: DbService;
   const createdIds: string[] = [];
 
@@ -37,11 +38,24 @@ describeDb('order_created guaranteed delivery', () => {
     price: 1299,
   };
   const emitted: { pattern: unknown; payload: unknown }[] = [];
-  const kitchenClient = {
-    emit: jest.fn((pattern: unknown, payload: unknown) => {
-      emitted.push({ pattern, payload });
-      return of({});
-    }),
+  const kitchenClientService = {
+    emitOrderCreated: jest.fn(
+      async (
+        order: { id: string; phone: string | null; note: string | null },
+        lines: unknown,
+      ) => {
+        emitted.push({
+          pattern: 'order_created',
+          payload: {
+            orderId: order.id,
+            phone: order.phone,
+            note: order.note,
+            lines,
+          },
+        });
+      },
+    ),
+    connect: jest.fn(),
   };
   const httpService = {
     get: jest.fn().mockReturnValue(of({ data: mockItem })),
@@ -66,16 +80,16 @@ describeDb('order_created guaranteed delivery', () => {
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
       providers: [
-        AppService,
+        OrdersService,
         DbService,
-        { provide: 'KITCHEN_SERVICE', useValue: kitchenClient },
+        { provide: KitchenClientService, useValue: kitchenClientService },
         { provide: HttpService, useValue: httpService },
         { provide: DiscoveryService, useValue: discovery },
         { provide: ConfigService, useValue: config },
       ],
     }).compile();
 
-    service = moduleFixture.get<AppService>(AppService);
+    service = moduleFixture.get<OrdersService>(OrdersService);
     dbService = moduleFixture.get<DbService>(DbService);
   });
 
@@ -90,17 +104,28 @@ describeDb('order_created guaranteed delivery', () => {
       await dbService.db.delete(orders).where(eq(orders.id, id));
     }
     emitted.length = 0;
-    kitchenClient.emit.mockImplementation(
-      (pattern: unknown, payload: unknown) => {
-        emitted.push({ pattern, payload });
-        return of({});
+    kitchenClientService.emitOrderCreated.mockReset();
+    kitchenClientService.emitOrderCreated.mockImplementation(
+      async (
+        order: { id: string; phone: string | null; note: string | null },
+        lines: unknown,
+      ) => {
+        emitted.push({
+          pattern: 'order_created',
+          payload: {
+            orderId: order.id,
+            phone: order.phone,
+            note: order.note,
+            lines,
+          },
+        });
       },
     );
   });
 
   it('flags the order unsent when the emit fails, buyer still gets success', async () => {
-    kitchenClient.emit.mockImplementationOnce(() =>
-      throwError(() => new Error('broker down')),
+    kitchenClientService.emitOrderCreated.mockRejectedValueOnce(
+      new Error('broker down'),
     );
 
     const result = await service.createOrder({ ...orderInput }, userId);
@@ -186,8 +211,8 @@ describeDb('order_created guaranteed delivery', () => {
       itemPrice: '1299',
       quantity: 1,
     });
-    kitchenClient.emit.mockImplementationOnce(() =>
-      throwError(() => new Error('broker still down')),
+    kitchenClientService.emitOrderCreated.mockRejectedValueOnce(
+      new Error('broker still down'),
     );
 
     const count = await service.reconcileUnsentOrders();

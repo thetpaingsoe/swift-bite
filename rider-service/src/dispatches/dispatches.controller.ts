@@ -1,5 +1,5 @@
 import { Controller, Logger } from '@nestjs/common';
-import { AppService } from './app.service';
+import { DispatchesService } from './dispatches.service';
 import { EventPattern, Payload, Ctx, RmqContext } from '@nestjs/microservices';
 import {
   correlationStorage,
@@ -30,10 +30,10 @@ interface RmqChannel {
 }
 
 @Controller()
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
+export class DispatchesController {
+  private readonly logger = new Logger(DispatchesController.name);
 
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly dispatchesService: DispatchesService) {}
 
   @EventPattern('order_ready')
   async handle(@Payload() data: OrderReadyPayload, @Ctx() context: RmqContext) {
@@ -61,7 +61,7 @@ export class AppController {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       try {
         await correlationStorage.run({ correlationId }, () =>
-          this.appService.dispatchRider({ ...data, correlationId }),
+          this.dispatchesService.dispatchRider({ ...data, correlationId }),
         );
         channel.ack(message);
         return;

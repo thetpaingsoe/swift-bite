@@ -11,7 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { of } from 'rxjs';
 import { eq } from 'drizzle-orm';
-import { AppService } from './app.service';
+import { OrdersService } from './orders.service';
+import { KitchenClientService } from '../kitchen-client/kitchen-client.service';
 import { DbService } from '../db/db.service';
 import { DiscoveryService } from '../consul/discovery.service';
 import { orderItems, orders } from '../db/schema';
@@ -24,19 +25,32 @@ if (!hasTestDb) {
 }
 const describeDb = hasTestDb ? describe : describe.skip;
 
-describeDb('AppService phone and note snapshot', () => {
+describeDb('OrdersService phone and note snapshot', () => {
   let moduleFixture: TestingModule;
-  let service: AppService;
+  let service: OrdersService;
   let dbService: DbService;
   let orderId: string | undefined;
 
   const userId = '11111111-1111-4111-8111-111111111111';
   const emitted: { pattern: unknown; payload: unknown }[] = [];
-  const kitchenClient = {
-    emit: jest.fn((pattern: unknown, payload: unknown) => {
-      emitted.push({ pattern, payload });
-      return of({});
-    }),
+  const kitchenClientService = {
+    emitOrderCreated: jest.fn(
+      async (
+        order: { id: string; phone: string | null; note: string | null },
+        lines: unknown,
+      ) => {
+        emitted.push({
+          pattern: 'order_created',
+          payload: {
+            orderId: order.id,
+            phone: order.phone,
+            note: order.note,
+            lines,
+          },
+        });
+      },
+    ),
+    connect: jest.fn(),
   };
 
   const mockItem = {
@@ -58,16 +72,16 @@ describeDb('AppService phone and note snapshot', () => {
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
       providers: [
-        AppService,
+        OrdersService,
         DbService,
-        { provide: 'KITCHEN_SERVICE', useValue: kitchenClient },
+        { provide: KitchenClientService, useValue: kitchenClientService },
         { provide: HttpService, useValue: httpService },
         { provide: DiscoveryService, useValue: discovery },
         { provide: ConfigService, useValue: config },
       ],
     }).compile();
 
-    service = moduleFixture.get<AppService>(AppService);
+    service = moduleFixture.get<OrdersService>(OrdersService);
     dbService = moduleFixture.get<DbService>(DbService);
   });
 

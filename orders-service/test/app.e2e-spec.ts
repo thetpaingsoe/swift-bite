@@ -5,7 +5,7 @@ import { App } from 'supertest/types';
 import { HttpService } from '@nestjs/axios';
 import { of, throwError } from 'rxjs';
 import { eq } from 'drizzle-orm';
-import { AppModule } from '../src/orders/app.module';
+import { OrdersModule } from '../src/orders/orders.module';
 import { DbService } from '../src/db/db.service';
 import { orders } from '../src/db/schema';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
@@ -27,7 +27,7 @@ describe('Orders (e2e)', () => {
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [OrdersModule],
     })
       .overrideProvider(HttpService)
       .useValue(mockHttpService)

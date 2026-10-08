@@ -1,11 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
-import { AppService } from './app.service';
+import { OrdersService } from './orders.service';
 
-describe('AppService fetchItem retry wrapper', () => {
+describe('OrdersService fetchItem retry wrapper', () => {
   const menuItemId = '550e8400-e29b-41d4-a716-446655440000';
   const mockItem = { id: menuItemId, name: 'Pizza', price: 1299 };
-  let service: AppService;
+  let service: OrdersService;
   let httpService: { get: jest.Mock };
   let discovery: { getServiceUrl: jest.Mock; invalidate: jest.Mock };
 
@@ -16,7 +16,7 @@ describe('AppService fetchItem retry wrapper', () => {
       invalidate: jest.fn(),
     };
     const config = { get: (_key: string, fallback?: string) => fallback };
-    service = new AppService(
+    service = new OrdersService(
       {} as never,
       {} as never,
       httpService as never,

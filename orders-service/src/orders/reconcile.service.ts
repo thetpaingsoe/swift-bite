@@ -5,7 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppService } from './app.service';
+import { OrdersService } from './orders.service';
 
 const RECONCILE_INTERVAL_MS = 30000;
 
@@ -16,7 +16,7 @@ export class ReconcileService implements OnModuleInit, OnModuleDestroy {
   private sweeping = false;
 
   constructor(
-    private readonly appService: AppService,
+    private readonly ordersService: OrdersService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -45,7 +45,7 @@ export class ReconcileService implements OnModuleInit, OnModuleDestroy {
       return;
     }
     this.sweeping = true;
-    this.appService
+    this.ordersService
       .reconcileUnsentOrders()
       .catch((error: Error) =>
         this.logger.error('Kitchen reconcile sweep failed', error),

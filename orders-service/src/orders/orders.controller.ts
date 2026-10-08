@@ -5,7 +5,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AppService } from './app.service';
+import { OrdersService } from './orders.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -28,10 +28,10 @@ interface RmqChannel {
 
 @Controller('orders')
 @ApiBearerAuth()
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
+export class OrdersController {
+  private readonly logger = new Logger(OrdersController.name);
 
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
   @UseGuards(AuthGuard, ThrottlerGuard)
@@ -45,7 +45,7 @@ export class AppController {
   })
   @ApiResponse({ status: 429, description: 'Too many orders, retry later' })
   async createOrder(@Body() dto: CreateOrderDto, @Req() req: any) {
-    return this.appService.createOrder(dto, req.user?.userId);
+    return this.ordersService.createOrder(dto, req.user?.userId);
   }
 
   @Get()
@@ -53,7 +53,7 @@ export class AppController {
   @ApiOperation({ summary: 'List my orders, paginated (admin sees all)' })
   @ApiResponse({ status: 200, description: 'Order page with meta' })
   async listOrders(@Query() query: ListOrdersDto, @Req() req: any) {
-    return this.appService.listOrders(
+    return this.ordersService.listOrders(
       req.user?.userId,
       req.user?.role,
       query.page ?? 1,
@@ -68,7 +68,7 @@ export class AppController {
   @ApiResponse({ status: 200, description: 'The order' })
   @ApiResponse({ status: 404, description: 'Order not found' })
   async getOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
-    return this.appService.getOrder(id, req.user?.userId, req.user?.role);
+    return this.ordersService.getOrder(id, req.user?.userId, req.user?.role);
   }
 
   @Patch(':id/cancel')
@@ -78,7 +78,7 @@ export class AppController {
   @ApiResponse({ status: 404, description: 'Order not found' })
   @ApiResponse({ status: 409, description: 'Order is past pending' })
   async cancelOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
-    return this.appService.cancelOrder(id, req.user?.userId, req.user?.role);
+    return this.ordersService.cancelOrder(id, req.user?.userId, req.user?.role);
   }
 
   @EventPattern('order_cooking')
@@ -140,7 +140,7 @@ export class AppController {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       try {
         await correlationStorage.run({ correlationId }, () =>
-          this.appService.updateStatus(data.orderId, status),
+          this.ordersService.updateStatus(data.orderId, status),
         );
         channel.ack(message);
         return;

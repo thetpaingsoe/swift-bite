@@ -8,9 +8,10 @@ dotenv.config({
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { of } from 'rxjs';
 import { eq } from 'drizzle-orm';
-import { AppService } from './app.service';
+import { TicketsService } from './tickets.service';
+import { RiderClientService } from '../rider-client/rider-client.service';
+import { OrdersClientService } from '../orders-client/orders-client.service';
 import { DbService } from '../db/db.service';
 import { tickets } from '../db/schema';
 
@@ -22,21 +23,35 @@ if (!hasTestDb) {
 }
 const describeDb = hasTestDb ? describe : describe.skip;
 
-describeDb('AppService phone and note flow', () => {
+describeDb('TicketsService phone and note flow', () => {
   let moduleFixture: TestingModule;
-  let service: AppService;
+  let service: TicketsService;
   let dbService: DbService;
   let ticketId: string | undefined;
 
   const emitted: { pattern: unknown; payload: unknown }[] = [];
-  const riderClient = {
-    emit: jest.fn((pattern: unknown, payload: unknown) => {
-      emitted.push({ pattern, payload });
-      return of({});
-    }),
+  const riderClientService = {
+    emitOrderReady: jest.fn(
+      async (ticket: {
+        orderId: string;
+        phone: string | null;
+        note: string | null;
+      }) => {
+        emitted.push({
+          pattern: 'order_ready',
+          payload: {
+            orderId: ticket.orderId,
+            phone: ticket.phone,
+            note: ticket.note,
+          },
+        });
+      },
+    ),
+    connect: jest.fn(),
   };
-  const ordersClient = {
-    emit: jest.fn(() => of({})),
+  const ordersClientService = {
+    notifyOrders: jest.fn(),
+    connect: jest.fn(),
   };
   const config = {
     get: (key: string, fallback?: string) => process.env[key] ?? fallback,
@@ -56,15 +71,15 @@ describeDb('AppService phone and note flow', () => {
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
       providers: [
-        AppService,
+        TicketsService,
         DbService,
-        { provide: 'RIDER_SERVICE', useValue: riderClient },
-        { provide: 'ORDERS_SERVICE', useValue: ordersClient },
+        { provide: RiderClientService, useValue: riderClientService },
+        { provide: OrdersClientService, useValue: ordersClientService },
         { provide: ConfigService, useValue: config },
       ],
     }).compile();
 
-    service = moduleFixture.get<AppService>(AppService);
+    service = moduleFixture.get<TicketsService>(TicketsService);
     dbService = moduleFixture.get<DbService>(DbService);
   });
 

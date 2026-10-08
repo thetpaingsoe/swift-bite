@@ -1,12 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
-import { ClientProxy } from '@nestjs/microservices';
+import { KitchenClientService } from '../kitchen-client/kitchen-client.service';
 
 @Injectable()
 export class RmqHealthIndicator {
   constructor(
     private healthIndicatorService: HealthIndicatorService,
-    @Inject('KITCHEN_SERVICE') private kitchenClient: ClientProxy,
+    private kitchenClient: KitchenClientService,
   ) {}
 
   pingCheck() {

@@ -2,15 +2,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestMicroservice } from '@nestjs/common';
 import { Transport } from '@nestjs/microservices';
 import { eq } from 'drizzle-orm';
-import { AppModule } from '../src/dispatches/app.module';
-import { AppController } from '../src/dispatches/app.controller';
+import { DispatchesModule } from '../src/dispatches/dispatches.module';
+import { DispatchesController } from '../src/dispatches/dispatches.controller';
 import { DbService } from '../src/db/db.service';
 import { dispatches } from '../src/db/schema';
 
 describe('Rider Service (e2e)', () => {
   let app: INestMicroservice;
   let dbService: DbService;
-  let controller: AppController;
+  let controller: DispatchesController;
 
   const mockOrderReady = {
     orderId: '550e8400-e29b-41d4-a716-446655440000',
@@ -23,7 +23,7 @@ describe('Rider Service (e2e)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [DispatchesModule],
     }).compile();
 
     app = moduleFixture.createNestMicroservice({
@@ -34,7 +34,7 @@ describe('Rider Service (e2e)', () => {
     await app.listen();
 
     dbService = moduleFixture.get<DbService>(DbService);
-    controller = moduleFixture.get<AppController>(AppController);
+    controller = moduleFixture.get<DispatchesController>(DispatchesController);
   });
 
   beforeEach(async () => {

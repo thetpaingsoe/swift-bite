@@ -1,6 +1,6 @@
 import type { RmqContext } from '@nestjs/microservices';
-import { AppController } from './app.controller';
-import type { AppService } from './app.service';
+import { OrdersController } from './orders.controller';
+import type { OrdersService } from './orders.service';
 
 function makeContext(channel: unknown, message: unknown): RmqContext {
   return {
@@ -9,16 +9,16 @@ function makeContext(channel: unknown, message: unknown): RmqContext {
   } as unknown as RmqContext;
 }
 
-describe('AppController status events ack/nack', () => {
+describe('OrdersController status events ack/nack', () => {
   const message = { deliveryTag: 1 };
   const payload = { orderId: 'order-1', correlationId: 'corr-1' };
   let appService: { updateStatus: jest.Mock };
-  let controller: AppController;
+  let controller: OrdersController;
   let channel: { ack: jest.Mock; nack: jest.Mock };
 
   beforeEach(() => {
     appService = { updateStatus: jest.fn().mockResolvedValue({}) };
-    controller = new AppController(appService as unknown as AppService);
+    controller = new OrdersController(appService as unknown as OrdersService);
     channel = { ack: jest.fn(), nack: jest.fn() };
   });
 

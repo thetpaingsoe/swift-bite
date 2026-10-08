@@ -13,7 +13,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AppService } from './app.service';
+import { TicketsService } from './tickets.service';
 import { KitchenGuard } from '../auth/kitchen.guard';
 import { ListTicketsDto } from './dto/list-tickets.dto';
 import { EventPattern, Payload, Ctx, RmqContext } from '@nestjs/microservices';
@@ -46,10 +46,10 @@ interface RmqChannel {
 }
 
 @Controller()
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
+export class TicketsController {
+  private readonly logger = new Logger(TicketsController.name);
 
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly ticketsService: TicketsService) {}
 
   @EventPattern('order_created')
   async handleOrderCreated(
@@ -80,7 +80,7 @@ export class AppController {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       try {
         await correlationStorage.run({ correlationId }, () =>
-          this.appService.createTicket({ ...data, correlationId }),
+          this.ticketsService.createTicket({ ...data, correlationId }),
         );
         channel.ack(message);
         return;
@@ -91,7 +91,7 @@ export class AppController {
             `kitchen rejected order_created for order ${orderId}: ${reason}`,
           );
           try {
-            await this.appService.failTicket(data.orderId, correlationId);
+            await this.ticketsService.failTicket(data.orderId, correlationId);
           } catch (compensationError) {
             this.logger.error(
               `kitchen could not compensate order ${data.orderId}: ${compensationError instanceof Error ? compensationError.message : String(compensationError)}`,
@@ -173,7 +173,7 @@ export class AppController {
   @ApiResponse({ status: 401, description: 'Invalid token' })
   @ApiResponse({ status: 403, description: 'Kitchen access required' })
   listTickets(@Query() query: ListTicketsDto) {
-    return this.appService.listTickets(query.status);
+    return this.ticketsService.listTickets(query.status);
   }
 
   @Get('tickets/:id')
@@ -183,7 +183,7 @@ export class AppController {
   @ApiResponse({ status: 200, description: 'The ticket' })
   @ApiResponse({ status: 404, description: 'Ticket not found' })
   getTicket(@Param('id', ParseUUIDPipe) id: string) {
-    return this.appService.getTicket(id);
+    return this.ticketsService.getTicket(id);
   }
 
   @Patch('tickets/:id/accept')
@@ -193,7 +193,7 @@ export class AppController {
   @ApiResponse({ status: 200, description: 'Ticket cooking' })
   @ApiResponse({ status: 409, description: 'Ticket is not received' })
   acceptTicket(@Param('id', ParseUUIDPipe) id: string) {
-    return this.appService.acceptTicket(id);
+    return this.ticketsService.acceptTicket(id);
   }
 
   @Patch('tickets/:id/complete')
@@ -203,7 +203,7 @@ export class AppController {
   @ApiResponse({ status: 200, description: 'Ticket ready' })
   @ApiResponse({ status: 409, description: 'Ticket is not cooking' })
   completeTicket(@Param('id', ParseUUIDPipe) id: string) {
-    return this.appService.completeTicket(id);
+    return this.ticketsService.completeTicket(id);
   }
 
   @Patch('tickets/:id/reject')
@@ -213,6 +213,6 @@ export class AppController {
   @ApiResponse({ status: 200, description: 'Ticket rejected' })
   @ApiResponse({ status: 409, description: 'Ticket is already ready' })
   rejectTicket(@Param('id', ParseUUIDPipe) id: string) {
-    return this.appService.rejectTicket(id);
+    return this.ticketsService.rejectTicket(id);
   }
 }

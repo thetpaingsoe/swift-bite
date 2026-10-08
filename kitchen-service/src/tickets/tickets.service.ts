@@ -1,23 +1,22 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
 import { asc, eq } from 'drizzle-orm';
-import { firstValueFrom, timeout } from 'rxjs';
 import { DbService } from '../db/db.service';
 import { tickets, type TicketLine } from '../db/schema';
+import { RiderClientService } from '../rider-client/rider-client.service';
+import { OrdersClientService } from '../orders-client/orders-client.service';
 
 @Injectable()
-export class AppService {
-  private readonly logger = new Logger(AppService.name);
+export class TicketsService {
+  private readonly logger = new Logger(TicketsService.name);
 
   constructor(
-    @Inject('RIDER_SERVICE') private readonly riderClient: ClientProxy,
-    @Inject('ORDERS_SERVICE') private readonly ordersClient: ClientProxy,
+    private readonly riderClient: RiderClientService,
+    private readonly ordersClient: OrdersClientService,
     private readonly dbService: DbService,
   ) {}
 
@@ -126,20 +125,7 @@ export class AppService {
     this.logger.log(`Ticket ${id} completed (ready)`);
 
     try {
-      await firstValueFrom(
-        this.riderClient
-          .emit('order_ready', {
-            orderId: ticket.orderId,
-            customerName: ticket.customerName,
-            lines: ticket.items,
-            street: ticket.street,
-            area: ticket.area,
-            phone: ticket.phone,
-            note: ticket.note,
-            correlationId: ticket.correlationId,
-          })
-          .pipe(timeout(5000)),
-      );
+      await this.riderClient.emitOrderReady(ticket);
       this.logger.log('Event emitted to rider_queue (order ready)');
     } catch (error) {
       this.logger.error(
@@ -196,20 +182,6 @@ export class AppService {
     orderId: string,
     correlationId: string | null,
   ) {
-    try {
-      await firstValueFrom(
-        this.ordersClient
-          .emit(event, { orderId, correlationId })
-          .pipe(timeout(5000)),
-      );
-      this.logger.log(
-        `Event emitted to orders_queue (${event}) for order ${orderId}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Ticket for order ${orderId} could not notify orders (${event})`,
-        error as Error,
-      );
-    }
+    await this.ordersClient.notifyOrders(event, orderId, correlationId);
   }
 }

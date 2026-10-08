@@ -1,9 +1,6 @@
-import {
-  NotFoundException,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
-import { AppService } from './app.service';
+import { OrdersService } from './orders.service';
 
 const menuItemId = '550e8400-e29b-41d4-a716-446655440000';
 const mockItem = { id: menuItemId, name: 'Pizza', price: 1299 };
@@ -24,7 +21,7 @@ function buildService(resetTimeoutMs = 30000) {
     get: (key: string, fallback?: unknown) =>
       key === 'ITEM_BREAKER_RESET_TIMEOUT_MS' ? resetTimeoutMs : fallback,
   };
-  const service = new AppService(
+  const service = new OrdersService(
     {} as never,
     {} as never,
     httpService as never,
@@ -34,13 +31,13 @@ function buildService(resetTimeoutMs = 30000) {
   return { service, httpService, discovery };
 }
 
-function fetch(service: AppService): Promise<unknown> {
+function fetch(service: OrdersService): Promise<unknown> {
   return (
     service as unknown as { fetchItem(id: string): Promise<unknown> }
   ).fetchItem(menuItemId);
 }
 
-function breakerOf(service: AppService): BreakerProbe {
+function breakerOf(service: OrdersService): BreakerProbe {
   return (service as unknown as { itemBreaker: BreakerProbe }).itemBreaker;
 }
 
@@ -54,8 +51,8 @@ function serverError() {
   );
 }
 
-describe('AppService item-service circuit breaker', () => {
-  const created: AppService[] = [];
+describe('OrdersService item-service circuit breaker', () => {
+  const created: OrdersService[] = [];
 
   afterEach(() => {
     for (const service of created.splice(0)) {
@@ -93,9 +90,7 @@ describe('AppService item-service circuit breaker', () => {
     );
     const elapsed = Date.now() - started;
 
-    await expect(fetch(service)).rejects.toThrow(
-      /temporarily unavailable/i,
-    );
+    await expect(fetch(service)).rejects.toThrow(/temporarily unavailable/i);
     expect(httpService.get.mock.calls.length).toBe(callsBefore);
     expect(elapsed).toBeLessThan(1000);
   });
@@ -120,10 +115,9 @@ describe('AppService item-service circuit breaker', () => {
     const rxjsTimeout = Object.assign(new Error('Timeout has occurred'), {
       name: 'TimeoutError',
     });
-    const opossumTimeout = Object.assign(
-      new Error('Timed out after 20000ms'),
-      { code: 'ETIMEDOUT' },
-    );
+    const opossumTimeout = Object.assign(new Error('Timed out after 20000ms'), {
+      code: 'ETIMEDOUT',
+    });
     httpService.get.mockImplementation(() => throwError(() => rxjsTimeout));
     await expect(fetch(service)).rejects.toBeInstanceOf(NotFoundException);
     httpService.get.mockImplementation(() => throwError(() => opossumTimeout));

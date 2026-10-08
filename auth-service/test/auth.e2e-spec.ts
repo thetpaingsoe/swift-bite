@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/auth/auth.module';
+import { AppModule } from '../src/app.module';
 import { DbService } from '../src/db/db.service';
 import { addresses, users } from '../src/db/schema';
 

@@ -4,34 +4,11 @@ import { HealthController } from './health.controller';
 import { NeonHealthIndicator } from './neon.health';
 import { RmqHealthIndicator } from './rmq.health';
 import { DbService } from '../db/db.service';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import { RiderClientModule } from '../rider-client/rider-client.module';
 
 @Module({
-  imports: [
-    TerminusModule,
-    ConfigModule,
-    ClientsModule.registerAsync([
-      {
-        name: 'RIDER_SERVICE',
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('RABBITMQ_URL')!],
-            queue: 'rider_queue',
-            queueOptions: {
-              durable: configService.get<string>('NODE_ENV') === 'production',
-              arguments: {
-                'x-dead-letter-exchange': '',
-                'x-dead-letter-routing-key': 'rider_queue.dlq',
-              },
-            },
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
-  ],
+  imports: [TerminusModule, ConfigModule, RiderClientModule],
   controllers: [HealthController],
   providers: [NeonHealthIndicator, RmqHealthIndicator, DbService],
 })

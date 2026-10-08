@@ -1,6 +1,6 @@
 import type { RmqContext } from '@nestjs/microservices';
-import { AppController } from './app.controller';
-import type { AppService } from './app.service';
+import { TicketsController } from './tickets.controller';
+import type { TicketsService } from './tickets.service';
 
 const validPayload = {
   orderId: '550e8400-e29b-41d4-a716-446655440000',
@@ -18,10 +18,10 @@ function makeContext(channel: unknown, message: unknown): RmqContext {
   } as unknown as RmqContext;
 }
 
-describe('AppController order_created ack/nack', () => {
+describe('TicketsController order_created ack/nack', () => {
   const message = { deliveryTag: 1 };
   let appService: { createTicket: jest.Mock; failTicket: jest.Mock };
-  let controller: AppController;
+  let controller: TicketsController;
   let channel: { ack: jest.Mock; nack: jest.Mock };
 
   beforeEach(() => {
@@ -29,7 +29,7 @@ describe('AppController order_created ack/nack', () => {
       createTicket: jest.fn().mockResolvedValue({ id: 't-1' }),
       failTicket: jest.fn().mockResolvedValue(undefined),
     };
-    controller = new AppController(appService as unknown as AppService);
+    controller = new TicketsController(appService as unknown as TicketsService);
     channel = { ack: jest.fn(), nack: jest.fn() };
   });
 

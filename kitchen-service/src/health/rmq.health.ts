@@ -1,12 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
-import { ClientProxy } from '@nestjs/microservices';
+import { RiderClientService } from '../rider-client/rider-client.service';
 
 @Injectable()
 export class RmqHealthIndicator {
   constructor(
     private healthIndicatorService: HealthIndicatorService,
-    @Inject('RIDER_SERVICE') private riderClient: ClientProxy,
+    private riderClient: RiderClientService,
   ) {}
 
   pingCheck() {

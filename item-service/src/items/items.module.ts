@@ -80,7 +80,7 @@ import { ConsulService } from '../consul/consul.service';
   controllers: [ItemsController],
   providers: [ItemsService, DbService, AdminGuard, ConsulService],
 })
-export class AppModule implements NestModule {
+export class ItemsModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(CorrelationMiddleware).forRoutes('*');
   }
