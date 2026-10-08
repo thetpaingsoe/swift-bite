@@ -4,7 +4,7 @@ import { HttpService } from '@nestjs/axios';
 import { of } from 'rxjs';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from '../src/items/items.module';
+import { ItemsModule } from '../src/items/items.module';
 import { DbService } from '../src/db/db.service';
 import { categories, menuItems } from '../src/db/schema';
 
@@ -22,7 +22,7 @@ describe('Categories (e2e)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [ItemsModule],
     })
       .overrideProvider(HttpService)
       .useValue(mockHttpService)

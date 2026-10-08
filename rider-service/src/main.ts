@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { AppModule } from './dispatches/app.module';
+import { DispatchesModule } from './dispatches/dispatches.module';
 import { AllRpcExceptionsFilter } from './common/filters/all-rpc-exception.filter';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -8,7 +8,7 @@ import { Logger as PinoLogger } from 'nestjs-pino';
 import { ConsulService } from './consul/consul.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(DispatchesModule, { bufferLogs: true });
   app.useLogger(app.get(PinoLogger));
   const logger = new Logger('Bootstrap');
   const configService = app.get(ConfigService);

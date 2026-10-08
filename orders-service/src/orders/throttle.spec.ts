@@ -5,8 +5,8 @@ import { App } from 'supertest/types';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter';
 import { AuthGuard } from '../auth/auth.guard';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { OrdersController } from './orders.controller';
+import { OrdersService } from './orders.service';
 
 describe('POST /orders throttling (SPEC-4.3)', () => {
   let app: INestApplication<App>;
@@ -38,8 +38,8 @@ describe('POST /orders throttling (SPEC-4.3)', () => {
             `Too many orders, retry after ${detail?.timeToExpire ?? 2}s`,
         }),
       ],
-      controllers: [AppController],
-      providers: [{ provide: AppService, useValue: appService }],
+      controllers: [OrdersController],
+      providers: [{ provide: OrdersService, useValue: appService }],
     })
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: () => true })

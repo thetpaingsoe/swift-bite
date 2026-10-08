@@ -5,7 +5,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AppService } from './app.service';
+import { OrdersService } from './orders.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -28,10 +28,10 @@ interface RmqChannel {
 
 @Controller('orders')
 @ApiBearerAuth()
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
+export class OrdersController {
+  private readonly logger = new Logger(OrdersController.name);
 
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: OrdersService) {}
 
   @Post()
   @UseGuards(AuthGuard, ThrottlerGuard)

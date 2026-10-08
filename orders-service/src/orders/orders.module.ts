@@ -8,11 +8,10 @@ import { HttpModule } from '@nestjs/axios';
 import { LoggerModule } from 'nestjs-pino';
 import { CorrelationMiddleware } from '../correlation/correlation.middleware';
 import { correlationStorage } from '../correlation/correlation.storage';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { OrdersController } from './orders.controller';
+import { OrdersService } from './orders.service';
 import { ReconcileService } from './reconcile.service';
 import { ReviewService } from './review.service';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import Joi from 'joi';
 import { DbService } from '../db/db.service';
@@ -21,6 +20,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from '../health/health.module';
 import { ConsulService } from '../consul/consul.service';
 import { DiscoveryService } from '../consul/discovery.service';
+import { KitchenClientModule } from '../kitchen-client/kitchen-client.module';
 
 @Module({
   imports: [
@@ -99,31 +99,12 @@ import { DiscoveryService } from '../consul/discovery.service';
           `Too many orders, retry after ${detail?.timeToExpire ?? 60}s`,
       }),
     }),
-    ClientsModule.registerAsync([
-      {
-        name: 'KITCHEN_SERVICE',
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('RABBITMQ_URL')!],
-            queue: 'kitchen_queue',
-            queueOptions: {
-              durable: configService.get<string>('NODE_ENV') === 'production',
-              arguments: {
-                'x-dead-letter-exchange': '',
-                'x-dead-letter-routing-key': 'kitchen_queue.dlq',
-              },
-            },
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
+    KitchenClientModule,
     HealthModule,
   ],
-  controllers: [AppController],
+  controllers: [OrdersController],
   providers: [
-    AppService,
+    OrdersService,
     ReconcileService,
     ReviewService,
     DbService,
@@ -132,7 +113,7 @@ import { DiscoveryService } from '../consul/discovery.service';
     DiscoveryService,
   ],
 })
-export class AppModule implements NestModule {
+export class OrdersModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(CorrelationMiddleware).forRoutes('*');
   }

@@ -13,7 +13,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AppService } from './app.service';
+import { TicketsService } from './tickets.service';
 import { KitchenGuard } from '../auth/kitchen.guard';
 import { ListTicketsDto } from './dto/list-tickets.dto';
 import { EventPattern, Payload, Ctx, RmqContext } from '@nestjs/microservices';
@@ -46,10 +46,10 @@ interface RmqChannel {
 }
 
 @Controller()
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
+export class TicketsController {
+  private readonly logger = new Logger(TicketsController.name);
 
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: TicketsService) {}
 
   @EventPattern('order_created')
   async handleOrderCreated(

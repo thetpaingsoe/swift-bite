@@ -8,9 +8,9 @@ dotenv.config({
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { of } from 'rxjs';
 import { eq } from 'drizzle-orm';
-import { AppService } from './app.service';
+import { DispatchesService } from './dispatches.service';
+import { OrdersClientService } from '../orders-client/orders-client.service';
 import { DbService } from '../db/db.service';
 import { dispatches } from '../db/schema';
 
@@ -22,14 +22,15 @@ if (!hasTestDb) {
 }
 const describeDb = hasTestDb ? describe : describe.skip;
 
-describeDb('AppService phone and note snapshot', () => {
+describeDb('DispatchesService phone and note snapshot', () => {
   let moduleFixture: TestingModule;
-  let service: AppService;
+  let service: DispatchesService;
   let dbService: DbService;
   let orderId: string | undefined;
 
-  const ordersClient = {
-    emit: jest.fn(() => of({})),
+  const ordersClientService = {
+    emitOrderDispatched: jest.fn(),
+    connect: jest.fn(),
   };
   const config = {
     get: (key: string, fallback?: string) => process.env[key] ?? fallback,
@@ -38,14 +39,14 @@ describeDb('AppService phone and note snapshot', () => {
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
       providers: [
-        AppService,
+        DispatchesService,
         DbService,
-        { provide: 'ORDERS_SERVICE', useValue: ordersClient },
+        { provide: OrdersClientService, useValue: ordersClientService },
         { provide: ConfigService, useValue: config },
       ],
     }).compile();
 
-    service = moduleFixture.get<AppService>(AppService);
+    service = moduleFixture.get<DispatchesService>(DispatchesService);
     dbService = moduleFixture.get<DbService>(DbService);
   });
 

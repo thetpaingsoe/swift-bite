@@ -13,9 +13,6 @@ import Joi from 'joi';
 import { DbService } from '../db/db.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { AddressesController } from '../addresses/addresses.controller';
-import { AddressesService } from '../addresses/addresses.service';
-import { HealthModule } from '../health/health.module';
 import { ConsulService } from '../consul/consul.service';
 
 @Module({
@@ -76,12 +73,12 @@ import { ConsulService } from '../consul/consul.service';
       }),
       inject: [ConfigService],
     }),
-    HealthModule,
   ],
-  controllers: [AuthController, AddressesController],
-  providers: [AuthService, AddressesService, DbService, ConsulService],
+  controllers: [AuthController],
+  providers: [AuthService, DbService, ConsulService],
+  exports: [AuthService, DbService],
 })
-export class AppModule implements NestModule {
+export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(CorrelationMiddleware).forRoutes('*');
   }

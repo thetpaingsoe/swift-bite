@@ -2,15 +2,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestMicroservice } from '@nestjs/common';
 import { Transport, ClientProxy } from '@nestjs/microservices';
 import { eq } from 'drizzle-orm';
-import { AppModule } from '../src/tickets/app.module';
-import { AppController } from '../src/tickets/app.controller';
+import { TicketsModule } from '../src/tickets/tickets.module';
+import { TicketsController } from '../src/tickets/tickets.controller';
 import { DbService } from '../src/db/db.service';
 import { tickets } from '../src/db/schema';
 
 describe('Kitchen Service (e2e)', () => {
   let app: INestMicroservice;
   let dbService: DbService;
-  let controller: AppController;
+  let controller: TicketsController;
   let clientProxy: ClientProxy;
 
   const mockOrderCreated = {
@@ -24,7 +24,7 @@ describe('Kitchen Service (e2e)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [TicketsModule],
     }).compile();
 
     app = moduleFixture.createNestMicroservice({
@@ -35,7 +35,7 @@ describe('Kitchen Service (e2e)', () => {
     await app.listen();
 
     dbService = moduleFixture.get<DbService>(DbService);
-    controller = moduleFixture.get<AppController>(AppController);
+    controller = moduleFixture.get<TicketsController>(TicketsController);
     clientProxy = moduleFixture.get<ClientProxy>('RIDER_SERVICE');
   });
 

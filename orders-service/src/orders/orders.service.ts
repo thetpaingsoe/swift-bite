@@ -1,5 +1,4 @@
 import {
-  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -9,13 +8,13 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 import CircuitBreaker from 'opossum';
 import { and, count, desc, eq } from 'drizzle-orm';
 import { orderItems, orders, type Order } from '../db/schema';
 import { DbService } from '../db/db.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { KitchenClientService } from '../kitchen-client/kitchen-client.service';
 import { DiscoveryService } from '../consul/discovery.service';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -37,12 +36,12 @@ const ITEM_BREAKER_ERROR_THRESHOLD = 50;
 const ITEM_BREAKER_TIMEOUT_MS = 20000;
 
 @Injectable()
-export class AppService implements OnModuleDestroy {
-  private readonly logger = new Logger(AppService.name);
+export class OrdersService implements OnModuleDestroy {
+  private readonly logger = new Logger(OrdersService.name);
   private readonly itemBreaker: CircuitBreaker<[string], MenuItem>;
 
   constructor(
-    @Inject('KITCHEN_SERVICE') private readonly kitchenClient: ClientProxy,
+    private readonly kitchenClient: KitchenClientService,
     private readonly dbService: DbService,
     private readonly httpService: HttpService,
     private readonly discovery: DiscoveryService,
@@ -159,24 +158,7 @@ export class AppService implements OnModuleDestroy {
     lines: { menuItemId: string; itemName: string; quantity: number }[],
     correlationId: string,
   ) {
-    await firstValueFrom(
-      this.kitchenClient
-        .emit('order_created', {
-          orderId: order.id,
-          customerName: order.customerName,
-          lines: lines.map(({ menuItemId, itemName, quantity }) => ({
-            menuItemId,
-            itemName,
-            quantity,
-          })),
-          street: order.street,
-          area: order.area,
-          phone: order.phone,
-          note: order.note,
-          correlationId,
-        })
-        .pipe(timeout(5000)),
-    );
+    await this.kitchenClient.emitOrderCreated(order, lines, correlationId);
   }
 
   async reconcileUnsentOrders(): Promise<number> {

@@ -8,8 +8,9 @@ import { App } from 'supertest/types';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter';
 import { AuthGuard } from '../auth/auth.guard';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { KitchenClientService } from '../kitchen-client/kitchen-client.service';
+import { OrdersController } from './orders.controller';
+import { OrdersService } from './orders.service';
 import { DbService } from '../db/db.service';
 import { DiscoveryService } from '../consul/discovery.service';
 
@@ -42,10 +43,10 @@ describe('POST /orders circuit breaker body (SPEC-4.4)', () => {
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
+      controllers: [OrdersController],
       providers: [
-        AppService,
-        { provide: 'KITCHEN_SERVICE', useValue: {} },
+        OrdersService,
+        { provide: KitchenClientService, useValue: {} },
         { provide: DbService, useValue: {} },
         { provide: HttpService, useValue: httpService },
         { provide: DiscoveryService, useValue: discovery },
@@ -58,8 +59,8 @@ describe('POST /orders circuit breaker body (SPEC-4.4)', () => {
       .useValue({ canActivate: () => true })
       .compile();
 
-    const service = moduleFixture.get<AppService>(AppService);
-    (service as unknown as { dbService: unknown }).dbService = {} as never;
+    const service = moduleFixture.get<OrdersService>(OrdersService);
+    (service as unknown as { dbService: unknown }).dbService = {};
 
     app = moduleFixture.createNestApplication();
     app.useGlobalFilters(new AllExceptionsFilter());

@@ -11,7 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { of } from 'rxjs';
 import { eq } from 'drizzle-orm';
-import { AppService } from './app.service';
+import { OrdersService } from './orders.service';
+import { KitchenClientService } from '../kitchen-client/kitchen-client.service';
 import { ReviewService } from './review.service';
 import { DbService } from '../db/db.service';
 import { DiscoveryService } from '../consul/discovery.service';
@@ -25,8 +26,9 @@ if (!hasTestDb) {
 }
 const describeDb = hasTestDb ? describe : describe.skip;
 
-const kitchenClient = {
-  emit: jest.fn(() => of({})),
+const kitchenClientService = {
+  emitOrderCreated: jest.fn(),
+  connect: jest.fn(),
 };
 const httpService = {
   get: jest.fn().mockReturnValue(
@@ -81,16 +83,16 @@ const createdIds: string[] = [];
 
 describeDb('rider-failure review compensation', () => {
   let moduleFixture: TestingModule;
-  let appService: AppService;
+  let appService: OrdersService;
   let reviewService: ReviewService;
   let savedAfterMin: string | undefined;
 
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
       providers: [
-        AppService,
+        OrdersService,
         DbService,
-        { provide: 'KITCHEN_SERVICE', useValue: kitchenClient },
+        { provide: KitchenClientService, useValue: kitchenClientService },
         { provide: HttpService, useValue: httpService },
         { provide: DiscoveryService, useValue: discovery },
         { provide: ConfigService, useValue: config },
@@ -98,7 +100,7 @@ describeDb('rider-failure review compensation', () => {
     }).compile();
 
     globalDb = moduleFixture.get<DbService>(DbService);
-    appService = moduleFixture.get<AppService>(AppService);
+    appService = moduleFixture.get<OrdersService>(OrdersService);
     reviewService = new ReviewService(
       globalDb,
       config as unknown as ConfigService,

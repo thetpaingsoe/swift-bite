@@ -1,10 +1,10 @@
 import { Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { OrdersClientModule } from '../orders-client/orders-client.module';
 import { LoggerModule } from 'nestjs-pino';
 import Joi from 'joi';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { DispatchesController } from './dispatches.controller';
+import { DispatchesService } from './dispatches.service';
 import { DbService } from '../db/db.service';
 import { ConsulService } from '../consul/consul.service';
 import { HealthModule } from '../health/health.module';
@@ -59,25 +59,10 @@ import { correlationStorage } from '../correlation/correlation.storage';
         };
       },
     }),
-    ClientsModule.registerAsync([
-      {
-        name: 'ORDERS_SERVICE',
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('RABBITMQ_URL')!],
-            queue: 'orders_queue',
-            queueOptions: {
-              durable: configService.get<string>('NODE_ENV') === 'production',
-            },
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
+    OrdersClientModule,
     HealthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, DbService, ConsulService, DlqService],
+  controllers: [DispatchesController],
+  providers: [DispatchesService, DbService, ConsulService, DlqService],
 })
-export class AppModule {}
+export class DispatchesModule {}

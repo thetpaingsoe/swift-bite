@@ -1,10 +1,11 @@
 import { Module, RequestMethod } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { TicketsController } from './tickets.controller';
+import { RiderClientModule } from '../rider-client/rider-client.module';
+import { OrdersClientModule } from '../orders-client/orders-client.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import Joi from 'joi';
-import { AppService } from './app.service';
+import { TicketsService } from './tickets.service';
 import { DbService } from '../db/db.service';
 import { ConsulService } from '../consul/consul.service';
 import { HealthModule } from '../health/health.module';
@@ -61,43 +62,11 @@ import { correlationStorage } from '../correlation/correlation.storage';
         };
       },
     }),
-    ClientsModule.registerAsync([
-      {
-        name: 'RIDER_SERVICE',
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('RABBITMQ_URL')!],
-            queue: 'rider_queue',
-            queueOptions: {
-              durable: configService.get<string>('NODE_ENV') === 'production',
-              arguments: {
-                'x-dead-letter-exchange': '',
-                'x-dead-letter-routing-key': 'rider_queue.dlq',
-              },
-            },
-          },
-        }),
-        inject: [ConfigService],
-      },
-      {
-        name: 'ORDERS_SERVICE',
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('RABBITMQ_URL')!],
-            queue: 'orders_queue',
-            queueOptions: {
-              durable: configService.get<string>('NODE_ENV') === 'production',
-            },
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
+    RiderClientModule,
+    OrdersClientModule,
     HealthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, DbService, ConsulService, KitchenGuard, DlqService],
+  controllers: [TicketsController],
+  providers: [TicketsService, DbService, ConsulService, KitchenGuard, DlqService],
 })
-export class AppModule {}
+export class TicketsModule {}

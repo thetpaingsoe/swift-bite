@@ -1,7 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './orders/app.module';
+import { OrdersModule } from './orders/orders.module';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
+import { buildValidationPipe } from './common/pipes/validation.pipe';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger as PinoLogger } from 'nestjs-pino';
@@ -9,19 +10,13 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ConsulService } from './consul/consul.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(OrdersModule, { bufferLogs: true });
   app.useLogger(app.get(PinoLogger));
   const logger = new Logger('Bootstrap');
 
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(buildValidationPipe());
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3000);

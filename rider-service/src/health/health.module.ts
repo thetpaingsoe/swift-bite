@@ -5,9 +5,14 @@ import { NeonHealthIndicator } from './neon.health';
 import { RmqHealthIndicator } from './rmq.health';
 import { DbService } from '../db/db.service';
 import { ConfigModule } from '@nestjs/config';
+import { OrdersClientModule } from '../orders-client/orders-client.module';
 
 @Module({
-  imports: [TerminusModule, ConfigModule.forRoot({ isGlobal: true })],
+  imports: [
+    TerminusModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+    OrdersClientModule,
+  ],
   controllers: [HealthController],
   providers: [NeonHealthIndicator, RmqHealthIndicator, DbService],
 })
