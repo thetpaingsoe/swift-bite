@@ -33,7 +33,7 @@ interface RmqChannel {
 export class DispatchesController {
   private readonly logger = new Logger(DispatchesController.name);
 
-  constructor(private readonly appService: DispatchesService) {}
+  constructor(private readonly dispatchesService: DispatchesService) {}
 
   @EventPattern('order_ready')
   async handle(@Payload() data: OrderReadyPayload, @Ctx() context: RmqContext) {
@@ -61,7 +61,7 @@ export class DispatchesController {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       try {
         await correlationStorage.run({ correlationId }, () =>
-          this.appService.dispatchRider({ ...data, correlationId }),
+          this.dispatchesService.dispatchRider({ ...data, correlationId }),
         );
         channel.ack(message);
         return;

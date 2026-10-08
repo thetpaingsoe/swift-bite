@@ -31,7 +31,7 @@ interface RmqChannel {
 export class OrdersController {
   private readonly logger = new Logger(OrdersController.name);
 
-  constructor(private readonly appService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
   @UseGuards(AuthGuard, ThrottlerGuard)
@@ -45,7 +45,7 @@ export class OrdersController {
   })
   @ApiResponse({ status: 429, description: 'Too many orders, retry later' })
   async createOrder(@Body() dto: CreateOrderDto, @Req() req: any) {
-    return this.appService.createOrder(dto, req.user?.userId);
+    return this.ordersService.createOrder(dto, req.user?.userId);
   }
 
   @Get()
@@ -53,7 +53,7 @@ export class OrdersController {
   @ApiOperation({ summary: 'List my orders, paginated (admin sees all)' })
   @ApiResponse({ status: 200, description: 'Order page with meta' })
   async listOrders(@Query() query: ListOrdersDto, @Req() req: any) {
-    return this.appService.listOrders(
+    return this.ordersService.listOrders(
       req.user?.userId,
       req.user?.role,
       query.page ?? 1,
@@ -68,7 +68,7 @@ export class OrdersController {
   @ApiResponse({ status: 200, description: 'The order' })
   @ApiResponse({ status: 404, description: 'Order not found' })
   async getOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
-    return this.appService.getOrder(id, req.user?.userId, req.user?.role);
+    return this.ordersService.getOrder(id, req.user?.userId, req.user?.role);
   }
 
   @Patch(':id/cancel')
@@ -78,7 +78,7 @@ export class OrdersController {
   @ApiResponse({ status: 404, description: 'Order not found' })
   @ApiResponse({ status: 409, description: 'Order is past pending' })
   async cancelOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
-    return this.appService.cancelOrder(id, req.user?.userId, req.user?.role);
+    return this.ordersService.cancelOrder(id, req.user?.userId, req.user?.role);
   }
 
   @EventPattern('order_cooking')
@@ -140,7 +140,7 @@ export class OrdersController {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       try {
         await correlationStorage.run({ correlationId }, () =>
-          this.appService.updateStatus(data.orderId, status),
+          this.ordersService.updateStatus(data.orderId, status),
         );
         channel.ack(message);
         return;
