@@ -22,12 +22,7 @@ import {
   resolveCorrelationId,
 } from '../correlation/correlation.storage';
 import { MAX_ATTEMPTS, RETRY_DELAY_MS, sleep } from '../rmq/rmq-retry';
-
-interface MenuItem {
-  id: string;
-  name: string;
-  price: number | string;
-}
+import type { MenuItem } from './interfaces/menu-item.interface';
 
 const ITEM_FETCH_TIMEOUT_MS = 5000;
 const ITEM_BREAKER_VOLUME_THRESHOLD = 5;

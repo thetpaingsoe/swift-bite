@@ -21,24 +21,24 @@ This is a learning/portfolio project (not production) — favor teaching value a
 
 ## Working Directory
 
-Scratch and temp files go in `main/agent-space/` at the repo root (not the system `/tmp/`).
+Scratch and temp files go in `main/agent-space/<ticket>/` at the repo root (not the system `/tmp/`).
 This directory is `chmod 700` — only you can read it.
 And you don't need project's parent directory access.
 
 ## Handoff Files (where they live)
 
 Ticket ids are `SEED-<n>`, assigned by the user, incrementing. The branch is the
-bare ticket (e.g. `SEED-1`). One handoff file per ticket
-branch, named after the branch: `main/agent-space/HANDOFF-<branch-name>.md`.
-One file covers the whole ticket across all services and the frontend.
+bare ticket (e.g. `SEED-1`). Each ticket lives in its own folder:
+`main/agent-space/<ticket>/` with `spec.md`, `handoff.md`, `review-log.md`.
+One folder covers the whole ticket across all services and the frontend.
 
 On session start (pre-flight):
 1. Get your branch: `git branch --show-current` in the repo you're working in.
-2. Read `main/agent-space/HANDOFF-<branch-name>.md`. If it doesn't exist, create it:
+2. Read `main/agent-space/<branch>/spec.md` and `main/agent-space/<branch>/handoff.md`. If they don't exist, create them:
 3. Note the Current Task and Open questions before touching code.
 
 ```
-# Handoff — <branch>
+# Handoff — <ticket>
 
 ## Requirements
 - write here user giving requirement
@@ -55,7 +55,7 @@ On session start (pre-flight):
 Before stopping (post-flight):
 1. Update Tasks top-down (done at top, upcoming below, one line per task).
 2. Update Open questions. Resolve or record what you learned.
-3. When a ticket is finished (merged / approved), move its handoff to `main/agent-space/archive/`.
+3. When a ticket is finished (merged / approved), move its folder to `main/agent-space/archive/`.
 
 Tasks is one flat list with a status icon per line: ✅ done, 🎯 in progress, ➡️ next up.
 Never mix two tickets in one file. Handoffs are git-ignored; never commit them.

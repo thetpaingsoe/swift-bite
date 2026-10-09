@@ -21,24 +21,14 @@ import {
   correlationStorage,
   resolveCorrelationId,
 } from '../correlation/correlation.storage';
-import type { TicketLine } from '../db/schema';
+import type { TicketLine } from './interfaces/ticket-line.interface';
+import type { OrderCreatedPayload } from './interfaces/order-created-payload.interface';
 import {
   MAX_ATTEMPTS,
   RETRY_DELAY_MS,
   isRetryable,
   sleep,
 } from '../rmq/rmq-retry';
-
-interface OrderCreatedPayload {
-  orderId: string;
-  customerName: string;
-  lines: TicketLine[];
-  street: string;
-  area: string;
-  phone?: string | null;
-  note?: string | null;
-  correlationId?: string;
-}
 
 interface RmqChannel {
   ack(message: unknown): void;

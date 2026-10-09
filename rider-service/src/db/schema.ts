@@ -5,12 +5,7 @@ import {
   jsonb,
   timestamp,
 } from 'drizzle-orm/pg-core';
-
-export interface DispatchLine {
-  menuItemId?: string;
-  itemName: string;
-  quantity: number;
-}
+import type { DispatchLine } from '../dispatches/interfaces/dispatch-line.interface';
 
 export const dispatches = pgTable('dispatches', {
   id: uuid('id').defaultRandom().primaryKey(),

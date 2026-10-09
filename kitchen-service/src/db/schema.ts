@@ -6,12 +6,7 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
-
-export interface TicketLine {
-  menuItemId?: string;
-  itemName: string;
-  quantity: number;
-}
+import type { TicketLine } from '../tickets/interfaces/ticket-line.interface';
 
 export const tickets = pgTable(
   'tickets',
