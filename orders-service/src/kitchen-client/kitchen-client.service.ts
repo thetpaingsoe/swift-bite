@@ -2,23 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 import type { Order } from '../db/schema';
-
-export interface OrderCreatedLine {
-  menuItemId: string;
-  itemName: string;
-  quantity: number;
-}
-
-export interface OrderCreatedPayload {
-  orderId: string;
-  customerName: string;
-  lines: OrderCreatedLine[];
-  street: string;
-  area: string;
-  phone: string | null;
-  note: string | null;
-  correlationId: string;
-}
+import type {
+  OrderCreatedLine,
+  OrderCreatedPayload,
+} from './interfaces/order-created-payload.interface';
 
 const EMIT_TIMEOUT_MS = 5000;
 

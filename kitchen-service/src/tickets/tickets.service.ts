@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
-import { tickets, type TicketLine } from '../db/schema';
+import { tickets } from '../db/schema';
+import type { TicketLine } from './interfaces/ticket-line.interface';
 import { RiderClientService } from '../rider-client/rider-client.service';
 import { OrdersClientService } from '../orders-client/orders-client.service';
 

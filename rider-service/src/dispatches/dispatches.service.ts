@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { dispatches, type DispatchLine } from '../db/schema';
+import { dispatches } from '../db/schema';
+import type { DispatchLine } from './interfaces/dispatch-line.interface';
 import { OrdersClientService } from '../orders-client/orders-client.service';
 
 const RIDERS = ['Mike', 'Alex', 'Joe', 'Bright'];

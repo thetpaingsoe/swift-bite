@@ -5,24 +5,14 @@ import {
   correlationStorage,
   resolveCorrelationId,
 } from '../correlation/correlation.storage';
-import type { DispatchLine } from '../db/schema';
+import type { DispatchLine } from './interfaces/dispatch-line.interface';
+import type { OrderReadyPayload } from './interfaces/order-ready-payload.interface';
 import {
   MAX_ATTEMPTS,
   RETRY_DELAY_MS,
   isRetryable,
   sleep,
 } from '../rmq/rmq-retry';
-
-interface OrderReadyPayload {
-  orderId: string;
-  customerName: string;
-  lines: DispatchLine[];
-  street: string;
-  area: string;
-  phone?: string | null;
-  note?: string | null;
-  correlationId?: string;
-}
 
 interface RmqChannel {
   ack(message: unknown): void;

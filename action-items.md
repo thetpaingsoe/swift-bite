@@ -270,8 +270,8 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 - **Apply similar structure to kitchen-service and rider-service**
 
 ### 5.2 Move DTOs to separate files
-- [ ] All DTO classes in dedicated `dto/` directories
-- [ ] All response types in dedicated `interfaces/` or `types/` directories
+- [x] All DTO classes in dedicated `dto/` directories
+- [x] All response types in dedicated `interfaces/` or `types/` directories
 
 ### 5.3 Fix and expand tests
 

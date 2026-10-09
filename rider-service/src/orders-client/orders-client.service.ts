@@ -1,12 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
-
-export interface OrderDispatchedPayload {
-  orderId: string;
-  riderName: string;
-  correlationId: string;
-}
+import type { OrderDispatchedPayload } from './interfaces/order-dispatched-payload.interface';
 
 const EMIT_TIMEOUT_MS = 5000;
 
