@@ -31,10 +31,22 @@ export interface OrderLine {
   quantity: number;
 }
 
+export interface OrderEvent {
+  id: string;
+  status: string;
+  note: string | null;
+  createdAt: string;
+}
+
 export interface Order {
   id: string;
   customerName: string;
+  subtotal: string;
+  fee: string;
+  tax: string;
   totalPrice: string;
+  paymentStatus: string;
+  paymentIntentId: string | null;
   street: string;
   area: string;
   phone: string | null;
@@ -42,6 +54,7 @@ export interface Order {
   status: string;
   createdAt: string;
   lines: OrderLine[];
+  events?: OrderEvent[];
 }
 
 export interface OrderPage {

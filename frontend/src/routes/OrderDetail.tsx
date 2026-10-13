@@ -75,7 +75,7 @@ export function OrderDetail() {
         <Card className="p-6">
           <h2 className="font-medium text-stone-900">Progress</h2>
           <div className="mt-4">
-            <StatusTimeline status={order.status} />
+            <StatusTimeline status={order.status} events={order.events} />
           </div>
           {!terminal.includes(order.status) && (
             <p className="mt-4 text-xs text-stone-400">Updating live…</p>
@@ -85,8 +85,24 @@ export function OrderDetail() {
           <h2 className="font-medium text-stone-900">Details</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between">
+              <dt className="text-stone-500">Subtotal</dt>
+              <dd className="text-stone-900">${Number(order.subtotal ?? 0)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-stone-500">Fee</dt>
+              <dd className="text-stone-900">${Number(order.fee ?? 0)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-stone-500">Tax</dt>
+              <dd className="text-stone-900">${Number(order.tax ?? 0)}</dd>
+            </div>
+            <div className="flex justify-between">
               <dt className="text-stone-500">Total</dt>
               <dd className="font-medium text-stone-900">${order.totalPrice}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-stone-500">Payment</dt>
+              <dd className="text-stone-900">{order.paymentStatus ?? "pending"}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-stone-500">Deliver to</dt>

@@ -16,7 +16,7 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `124 / 194 items completed (64%)`
+**Overall:** `128 / 194 items completed (66%)`
 
 ```
 Phase 1  — Foundation         [██████████]  33/33  (100%)
@@ -26,7 +26,7 @@ Phase 4  — Resilience         [██████████]  26/26  (100%)
 Phase 5  — Organization       [███░░░░░░░]  2/8    (25%)
 Phase 6  — Frontend           [██████████]  26/26  (100%)
 Phase 7  — Integration        [░░░░░░░░░░]  0/7    (0%)
-Phase 8  — Payments           [░░░░░░░░░░]  0/10   (0%)
+Phase 8  — Payments           [████░░░░░░]  4/10   (40%)
 Phase 9  — Realtime           [░░░░░░░░░░]  0/6    (0%)
 Phase 10 — Notifications      [░░░░░░░░░░]  0/5    (0%)
 Phase 11 — Menu/Search/Media  [░░░░░░░░░░]  0/8    (0%)
@@ -38,7 +38,7 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** SEED-12 Consul ghost-hardening (hostname health checks, consul healthy-gate, 60s re-register heartbeat, 4/4 scenarios live-verified) | **Date:** 2026-09-30
+**Last action completed:** SEED-20 Order money + state model (8.1 columns, payment state, order_events timeline, backfill, detail pages, live-verified) | **Date:** 2026-10-13
 
 ---
 
@@ -367,10 +367,12 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 > Schema changes (payment state, timeline, totals) land first. Blocks Phase 14 refunds + revenue.
 
 ### 8.1 Order money + state model
-- [ ] Add orders columns: `subtotal`, `fee`, `tax` (numeric) alongside existing `total_price`
-- [ ] Add payment state (`payment_status`: `pending`/`paid`/`failed`/`refunded`) + `payment_intent_id`
-- [ ] Add order timeline table (`order_events`: id, order_id, status, note, created_at) as the detail-timeline source
-- [ ] Migration + backfill (existing orders as legacy/paid, timeline seeded from current `status`)
+- [x] Add orders columns: `subtotal`, `fee`, `tax` (numeric) alongside existing `total_price`
+- [x] Add payment state (`payment_status`: `pending`/`paid`/`failed`/`refunded`) + `payment_intent_id`
+- [x] Add order timeline table (`order_events`: id, order_id, status, note, created_at) as the detail-timeline source
+- [x] Migration + backfill (existing orders as legacy/paid, timeline seeded from current `status`)
+
+> SEED-20, live-verified 2026-10-13: fee/tax stay 0 until 8.2, subtotal equals total. Detail pages show the split + timeline. Checkout price breakdown deferred to 8.2.
 
 ### 8.2 Stripe (test mode)
 - [ ] Create PaymentIntent on `POST /orders`; return `client_secret`, save order as `payment_status: pending`
