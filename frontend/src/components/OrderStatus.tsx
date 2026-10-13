@@ -43,7 +43,28 @@ export function StatusText({ status }: { status: string }) {
   );
 }
 
-export function StatusTimeline({ status }: { status: string }) {
+export function StatusTimeline({
+  status,
+  events,
+}: {
+  status: string;
+  events?: { status: string }[];
+}) {
+  if (events && events.length > 0) {
+    return (
+      <ol className="space-y-3">
+        {events.map((event, i) => (
+          <li key={`${event.status}-${i}`} className="flex items-center gap-3">
+            <span className={cn("h-3 w-3 rounded-full", dotColors[event.status] ?? "bg-stone-500")} />
+            <span className="text-sm font-medium capitalize text-stone-900">
+              {statusLabel(event.status)}
+            </span>
+          </li>
+        ))}
+      </ol>
+    );
+  }
+
   if (status === "cancelled") {
     return (
       <div className="flex items-center gap-2">

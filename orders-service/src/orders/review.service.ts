@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { and, eq, lt } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
-import { orders } from '../db/schema';
+import { orderEvents, orders } from '../db/schema';
 import {
   correlationStorage,
   resolveCorrelationId,
@@ -76,6 +76,21 @@ export class ReviewService implements OnModuleInit, OnModuleDestroy {
             .where(and(eq(orders.id, row.id), eq(orders.status, 'ready')))
             .returning({ id: orders.id });
           if (updated) {
+            try {
+              await this.dbService.db
+                .insert(orderEvents)
+                .values({ orderId: row.id, status: 'needs_review' });
+            } catch (error) {
+              await this.dbService.db
+                .update(orders)
+                .set({ status: 'ready' })
+                .where(eq(orders.id, row.id));
+              this.logger.error(
+                `Order ${row.id} flagged needs_review but the timeline write failed, reverted to ready`,
+                error as Error,
+              );
+              return false;
+            }
             this.logger.warn(
               `Order ${row.id} ready since ${row.readyAt?.toISOString()} with no dispatch after ${afterMin}m, flagged needs_review`,
             );

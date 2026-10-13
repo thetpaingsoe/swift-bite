@@ -71,6 +71,13 @@
       "when": 1790776249355,
       "tag": "0009_grey_stepford_cuckoos",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791905152438,
+      "tag": "0010_simple_lady_bullseye",
+      "breakpoints": true
     }
   ]
 }

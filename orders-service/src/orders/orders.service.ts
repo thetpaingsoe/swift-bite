@@ -10,8 +10,8 @@ import {
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, timeout } from 'rxjs';
 import CircuitBreaker from 'opossum';
-import { and, count, desc, eq } from 'drizzle-orm';
-import { orderItems, orders, type Order } from '../db/schema';
+import { and, asc, count, desc, eq } from 'drizzle-orm';
+import { orderEvents, orderItems, orders, type Order } from '../db/schema';
 import { DbService } from '../db/db.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { KitchenClientService } from '../kitchen-client/kitchen-client.service';
@@ -87,6 +87,9 @@ export class OrdersService implements OnModuleDestroy {
     );
 
     const totalPrice = lines.reduce((sum, line) => sum + line.lineTotal, 0);
+    const subtotal = totalPrice;
+    const fee = 0;
+    const tax = 0;
     const { correlationId } = resolveCorrelationId(
       correlationStorage.getStore()?.correlationId,
     );
@@ -98,31 +101,42 @@ export class OrdersService implements OnModuleDestroy {
         .values({
           userId: userId ?? null,
           customerName: dto.customerName,
-          totalPrice: String(totalPrice),
+          subtotal: String(subtotal),
+          fee: String(fee),
+          tax: String(tax),
+          totalPrice: String(subtotal + fee + tax),
           street: dto.street,
           area: dto.area,
           phone: dto.phone,
           note: dto.note ?? null,
           status: 'pending',
+          paymentStatus: 'pending',
+          paymentIntentId: null,
           kitchenNotified: false,
           correlationId,
         })
         .returning();
 
       await this.dbService.db.insert(orderItems).values(
-        lines.map(({ lineTotal, ...line }) => ({
-          ...line,
+        lines.map((line) => ({
+          menuItemId: line.menuItemId,
+          itemName: line.itemName,
+          itemPrice: line.itemPrice,
+          quantity: line.quantity,
           orderId: order.id,
         })),
       );
+
+      await this.appendEvent(order.id, 'pending');
     } catch (error) {
+      if (order) {
+        await this.dbService.db.delete(orders).where(eq(orders.id, order.id));
+      }
       this.logger.error('Failed to persist order', error as Error);
       throw new BadGatewayException('Could not save the order');
     }
 
-    this.logger.log(
-      `Order saved to DB: ${order.id} (${lines.length} lines)`,
-    );
+    this.logger.log(`Order saved to DB: ${order.id} (${lines.length} lines)`);
 
     try {
       await this.emitOrderCreated(order, lines, correlationId);
@@ -271,7 +285,19 @@ export class OrdersService implements OnModuleDestroy {
       .from(orderItems)
       .where(eq(orderItems.orderId, order.id));
 
-    return { ...order, lines };
+    const events = await this.dbService.db
+      .select()
+      .from(orderEvents)
+      .where(eq(orderEvents.orderId, order.id))
+      .orderBy(asc(orderEvents.createdAt));
+
+    return { ...order, lines, events };
+  }
+
+  async appendEvent(orderId: string, status: string, note?: string) {
+    await this.dbService.db
+      .insert(orderEvents)
+      .values({ orderId, status, note: note ?? null });
   }
 
   async updateStatus(orderId: string, status: string) {
@@ -290,6 +316,9 @@ export class OrdersService implements OnModuleDestroy {
     ) {
       return current;
     }
+    if (current.status === status) {
+      return current;
+    }
 
     const [order] = await this.dbService.db
       .update(orders)
@@ -302,6 +331,15 @@ export class OrdersService implements OnModuleDestroy {
       .returning();
 
     if (order) {
+      try {
+        await this.appendEvent(orderId, status);
+      } catch (error) {
+        await this.dbService.db
+          .update(orders)
+          .set({ status: current.status })
+          .where(eq(orders.id, orderId));
+        throw error;
+      }
       this.logger.log(`Order ${orderId} status updated to ${status}`);
     }
 
@@ -322,6 +360,16 @@ export class OrdersService implements OnModuleDestroy {
       .set({ status: 'cancelled' })
       .where(eq(orders.id, id))
       .returning();
+
+    try {
+      await this.appendEvent(id, 'cancelled');
+    } catch (error) {
+      await this.dbService.db
+        .update(orders)
+        .set({ status: 'pending' })
+        .where(eq(orders.id, id));
+      throw error;
+    }
 
     this.logger.log(`Order ${id} cancelled by user ${userId}`);
 
