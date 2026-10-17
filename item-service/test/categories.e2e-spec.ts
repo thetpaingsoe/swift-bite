@@ -9,11 +9,15 @@ import { DbService } from '../src/db/db.service';
 import { categories, menuItems } from '../src/db/schema';
 
 const mockHttpService = {
-  get: jest
-    .fn()
-    .mockReturnValue(
-      of({ data: { userId: 'test-user-id', email: 'test@example.com' } }),
-    ),
+  get: jest.fn().mockReturnValue(
+    of({
+      data: {
+        userId: 'test-user-id',
+        email: 'test@example.com',
+        role: 'admin',
+      },
+    }),
+  ),
 };
 
 describe('Categories (e2e)', () => {
@@ -42,6 +46,8 @@ describe('Categories (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dbService.db.delete(menuItems);
+    await dbService.db.delete(categories);
     await app.close();
   });
 
@@ -69,8 +75,8 @@ describe('Categories (e2e)', () => {
         .expect(200);
 
       expect(response.body).toHaveLength(2);
-      expect(response.body[0].name).toBe('Cat-A');
-      expect(response.body[1].name).toBe('Cat-B');
+      const names = (response.body as { name: string }[]).map((c) => c.name);
+      expect([...names].sort()).toEqual(['Cat-A', 'Cat-B']);
     });
   });
 

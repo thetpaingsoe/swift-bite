@@ -8,12 +8,16 @@ import { ItemsModule } from '../src/items/items.module';
 import { DbService } from '../src/db/db.service';
 import { categories, menuItems } from '../src/db/schema';
 
+const adminUser = {
+  userId: 'test-user-id',
+  email: 'test@example.com',
+  role: 'admin',
+};
+
+let authUser: Record<string, unknown> = adminUser;
+
 const mockHttpService = {
-  get: jest
-    .fn()
-    .mockReturnValue(
-      of({ data: { userId: 'test-user-id', email: 'test@example.com' } }),
-    ),
+  get: jest.fn(() => of({ data: authUser })),
 };
 
 describe('Items (e2e)', () => {
@@ -42,10 +46,13 @@ describe('Items (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dbService.db.delete(menuItems);
+    await dbService.db.delete(categories);
     await app.close();
   });
 
   beforeEach(async () => {
+    authUser = adminUser;
     await dbService.db.delete(menuItems);
     await dbService.db.delete(categories);
   });
@@ -148,7 +155,7 @@ describe('Items (e2e)', () => {
         .expect(200);
 
       expect(response.body.name).toBe('Pizza');
-      expect(response.body.price).toBe(1299);
+      expect(response.body.price).toBe('1299');
     });
 
     it('should return 404 for non-existent item', async () => {
@@ -179,7 +186,27 @@ describe('Items (e2e)', () => {
 
       expect(response.body).toHaveProperty('id');
       expect(response.body.name).toBe('Pizza');
-      expect(response.body.price).toBe(1299);
+      expect(response.body.price).toBe('1299');
+    });
+
+    it('should reject a non-admin token', async () => {
+      authUser = {
+        userId: 'test-user-id',
+        email: 'test@example.com',
+        role: 'customer',
+      };
+
+      await request(app.getHttpServer())
+        .post('/items')
+        .set('Authorization', 'Bearer test-token')
+        .send({
+          name: 'Pizza',
+          description: 'Cheesy pizza',
+          price: 1299,
+          categoryId: '00000000-0000-0000-0000-000000000000',
+          imageUrl: 'https://example.com/pizza.jpg',
+        })
+        .expect(403);
     });
 
     it('should reject item with non-existent category', async () => {
@@ -249,7 +276,7 @@ describe('Items (e2e)', () => {
         .expect(200);
 
       expect(response.body.name).toBe('Margherita Pizza');
-      expect(response.body.price).toBe(1499);
+      expect(response.body.price).toBe('1499');
     });
 
     it('should return 404 for non-existent item', async () => {

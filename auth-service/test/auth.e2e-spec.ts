@@ -29,6 +29,8 @@ describe('Auth (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dbService.db.delete(addresses);
+    await dbService.db.delete(users);
     await app.close();
   });
 

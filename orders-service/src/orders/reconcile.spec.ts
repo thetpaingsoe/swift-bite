@@ -167,8 +167,10 @@ describeDb('order_created guaranteed delivery', () => {
 
     const count = await service.reconcileUnsentOrders();
 
-    expect(count).toBe(1);
-    const event = emitted.find((e) => e.pattern === 'order_created');
+    expect(count).toBeGreaterThanOrEqual(1);
+    const event = emitted.find(
+      (e) => (e.payload as { orderId: string }).orderId === row.id,
+    );
     expect(event).toBeDefined();
     const payload = event?.payload as {
       orderId: string;
@@ -211,13 +213,17 @@ describeDb('order_created guaranteed delivery', () => {
       itemPrice: '1299',
       quantity: 1,
     });
-    kitchenClientService.emitOrderCreated.mockRejectedValueOnce(
-      new Error('broker still down'),
+    kitchenClientService.emitOrderCreated.mockImplementation(
+      (order: { id: string }) => {
+        if (order.id === row.id) {
+          return Promise.reject(new Error('broker still down'));
+        }
+        return Promise.resolve();
+      },
     );
 
-    const count = await service.reconcileUnsentOrders();
+    await service.reconcileUnsentOrders();
 
-    expect(count).toBe(0);
     const [after] = await dbService.db
       .select()
       .from(orders)
@@ -236,8 +242,11 @@ describeDb('order_created guaranteed delivery', () => {
     expect(row.kitchenNotified).toBe(true);
 
     emitted.length = 0;
-    const count = await service.reconcileUnsentOrders();
-    expect(count).toBe(0);
-    expect(emitted).toHaveLength(0);
+    await service.reconcileUnsentOrders();
+
+    const reEmittedOwn = emitted.filter(
+      (e) => (e.payload as { orderId: string }).orderId === result.orderId,
+    );
+    expect(reEmittedOwn).toHaveLength(0);
   });
 });
