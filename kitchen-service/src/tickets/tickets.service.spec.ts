@@ -87,6 +87,10 @@ describeDb('TicketsService phone and note flow', () => {
     await moduleFixture.close();
   });
 
+  beforeEach(async () => {
+    await dbService.db.delete(tickets);
+  });
+
   afterEach(async () => {
     if (ticketId) {
       await dbService.db.delete(tickets).where(eq(tickets.id, ticketId));

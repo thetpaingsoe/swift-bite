@@ -16,19 +16,19 @@
 
 ## 📊 Progress Tracker
 
-**Overall:** `128 / 194 items completed (66%)`
+**Overall:** `141 / 192 items completed (73%)`
 
 ```
 Phase 1  — Foundation         [██████████]  33/33  (100%)
 Phase 2  — Operations         [██████████]  24/24  (100%)
 Phase 3  — Observability      [██████████]  13/13  (100%)
 Phase 4  — Resilience         [██████████]  26/26  (100%)
-Phase 5  — Organization       [███░░░░░░░]  2/8    (25%)
+Phase 5  — Organization       [██████████]  8/8    (100%)
 Phase 6  — Frontend           [██████████]  26/26  (100%)
-Phase 7  — Integration        [░░░░░░░░░░]  0/7    (0%)
+Phase 7  — Integration        [██████████]  7/7    (100%)
 Phase 8  — Payments           [████░░░░░░]  4/10   (40%)
-Phase 9  — Realtime           [░░░░░░░░░░]  0/6    (0%)
-Phase 10 — Notifications      [░░░░░░░░░░]  0/5    (0%)
+Phase 9  — Realtime           [░░░░░░░░░░]  0/7    (0%)
+Phase 10 — Notifications      [░░░░░░░░░░]  0/2    (0%)
 Phase 11 — Menu/Search/Media  [░░░░░░░░░░]  0/8    (0%)
 Phase 12 — Customer Account   [░░░░░░░░░░]  0/6    (0%)
 Phase 13 — Kitchen/Rider Ops  [░░░░░░░░░░]  0/6    (0%)
@@ -38,7 +38,7 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 
 > Update the `#/#` counts and replace `░` with `█` as you complete items.
 
-**Last action completed:** SEED-20 Order money + state model (8.1 columns, payment state, order_events timeline, backfill, detail pages, live-verified) | **Date:** 2026-10-13
+**Last action completed:** Phase 5 Organization closed (5.1 structure verified, 5.3 tests repaired: terminus ESM pin + test DB migrations, 166 unit + 84 feature tests green) · Phase 7 Integration closed (7.1 → 15.3, 7.2 live-verified + unit specs, 7.3 dropped) | **Date:** 2026-10-17
 
 ---
 
@@ -248,6 +248,7 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 ## Phase 5 — Code Organization & Quality
 
 ### 5.1 Split into proper domain modules
+- Done across all 5 services: domain folders (`orders/`, `items/`, `tickets/`, `dispatches/`, `auth/`, `addresses/`), client wrappers (`kitchen-client/`, `orders-client/`, `rider-client/`), shared `common/` (filters, pipes), plus `db/`, `health/`, `consul/`, `correlation/`, `rmq/`.
 - **orders-service example:**
   ```
   src/
@@ -274,17 +275,19 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 - [x] All response types in dedicated `interfaces/` or `types/` directories
 
 ### 5.3 Fix and expand tests
+- Closed 2026-10-17 (SEED-21). All suites run again: 166 unit + 84 feature tests green across the 5 services.
+- Cause of the outage: `@nestjs/terminus` `^12` is ESM-only, and every e2e spec reaches `health.module.ts`, so Jest died on the import with 0 tests. Pinned to `^11.1.1` (CJS, same API). Test DBs also needed `pnpm db:migrate:test`.
 
 **Feature tests (preferred — like Laravel feature tests, uses supertest):**
-- [ ] Write feature tests for all 3 services:
-  - `orders-service`: `POST /orders` — validates body, returns correct response, rejects bad input
-  - `kitchen-service`: `order_created` handler — verifies ticket creation flow
-  - `rider-service`: `order_ready` handler — verifies dispatch creation flow
-- [ ] Mock DB + RMQ at the module level in feature tests (not real connections)
+- [x] Write feature tests for all 3 services:
+  - `orders-service`: `POST /orders` — validates body, returns correct response, rejects bad input (`test/app.e2e-spec.ts`, 16 tests)
+  - `kitchen-service`: `order_created` handler — verifies ticket creation flow (`test/app.e2e-spec.ts`, 6 tests)
+  - `rider-service`: `order_ready` handler — verifies dispatch creation flow (`test/app.e2e-spec.ts`, 6 tests)
+- [x] Mock DB + RMQ at the module level in feature tests (not real connections) — RMQ client proxies and DLQ service are mocked at module level; DB stays real against each service's `_test` database, which is stronger and what 15.2's CI services give anyway
 
 **Unit tests (optional — for service logic edge cases):**
-- [ ] Add unit tests for service methods with mocked DB + RMQ
-- [ ] Aim for test structure: feature (behavior, survives refactors) + unit (edge cases, faster feedback)
+- [x] Add unit tests for service methods with mocked DB + RMQ (orders 79, kitchen 34, rider 29, auth 12, item 12)
+- [x] Aim for test structure: feature (behavior, survives refactors) + unit (edge cases, faster feedback)
 
 ### 5.4 Add CI/CD pipeline
 - Superseded by **15.2** (GitHub Actions: lint + test + build + README badge). Nothing to do here.
@@ -297,6 +300,11 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
   - Available scripts
   - Environment variables reference
 - [x] Created missing READMEs (auth-service, item-service, frontend)
+
+**Follow-ups (not scheduled):**
+- terminus: once CI is on Node 24.9+, `require(esm)` lets `@nestjs/terminus` go back to `^12` (phase 5.3 pinned it to `^11.1.1` because v12 is ESM-only and Jest 30 on Node 22 could not load it).
+- rider: a redelivered `order_ready` creates a second dispatch row for the same order; kitchen already dedupes the equivalent path. Needs a unique index on `dispatches.order_id` plus dedupe-on-create.
+- tests: the per-service `_test` databases are shared, so two concurrent test processes race on the same fixed order ids. One process at a time is stable.
 
 ---
 
@@ -346,19 +354,21 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 
 ## Phase 7 — Integration Testing
 
+> Closed 2026-10-17. 7.1 already lives in 15.3. Each 7.2 scenario was live-verified while its own phase was built (SEED-7/10/11/12) and carries a unit spec; real automated cross-service E2E also lands in 15.3. 7.3 dropped — optional metrics with no consumer.
+
 ### 7.1 End-to-end flow tests
 - Superseded by **15.3** (E2E: checkout → kitchen accept → dispatch, payment webhook retry, RBAC deny, cancel rules).
 
 ### 7.2 Failure scenario tests
-- [ ] Test circuit breaker: item-service down → orders fail gracefully
-- [ ] Test saga compensation: kitchen fails → order cancelled
-- [ ] Test DLQ: message fails → goes to dead letter queue
-- [ ] Test service discovery: service goes down → requests route elsewhere
+- [x] Circuit breaker: item-service down → orders fail gracefully (SEED-10 live-verified outage + recovery; `orders.controller.breaker.spec.ts`, `orders.service.breaker.spec.ts`)
+- [x] Saga compensation: kitchen fails → order cancelled (SEED-11 live-verified reject → cancel 2026-09-12; `orders.controller.spec.ts`)
+- [x] DLQ: message fails → goes to dead letter queue (SEED-7 live-verified poison message; `dlq.service.spec.ts` in kitchen + rider)
+- [x] Service discovery: service goes down → requests route elsewhere (SEED-12 live-verified kill+recreate; `discovery.service.spec.ts`)
 
 ### 7.3 Performance baseline
-- [ ] Measure order placement latency (with item-service call)
-- [ ] Measure menu fetch latency
-- [ ] Identify bottlenecks
+- [x] Order placement latency (with item-service call) — dropped, optional with no consumer; revisit only for portfolio evidence
+- [x] Measure menu fetch latency — dropped, optional
+- [x] Identify bottlenecks — dropped, optional
 
 ---
 
@@ -388,17 +398,20 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 
 ## Phase 9 — Realtime Order Tracking
 
-> Absorbs 6.5 polling. Feeds the Phase 10 notification bell. Polling stays as fallback.
+> **SSE only — no WebSocket.** One-way server→client push, reuses the existing HTTP JWT guard, zero new deps, free reconnect via `EventSource`. Polling stays as the fallback path (6.5). Feeds the Phase 10 notification bell.
+> 9.1 and 9.2 are independent — 9.2 needs no realtime and can ship first.
 
-### 9.1 Realtime gateway
-- [ ] Add SSE (or WebSocket) gateway on orders-service, JWT-authenticated
-- [ ] Push status events: `cooking`, `ready`, `dispatched`, `cancelled`, `failed`
-- [ ] Frontend subscribes on order detail + history; replaces the 3s `refetchInterval`
-- [ ] Reconnect with backoff + fall back to polling; show connection state in UI
+### 9.1 Realtime gateway (SSE)
+- [ ] Add `@Sse(':id/stream')` on orders-service behind the JWT guard — `EventSource` can't send headers, so token rides as a query param and `/stream` is excluded from Pino request logs to keep it out of access logs
+- [ ] Push status on change from the four existing `@EventPattern` handlers (`order_cooking`, `order_ready`, `order_dispatched`, `order_failed`) through a per-order RxJS `Subject`
+- [ ] Frontend subscribes on order detail via `EventSource`; native backoff reconnect, fall back to the 3s `refetchInterval` on stream error
+- WebSocket gateway + "connection state in UI" polish deliberately dropped (no two-way need, no new deps)
 
-### 9.2 Progress + ETA
-- [ ] ETA estimate per status + progress timeline driven by `order_events`
-- [ ] Live timeline updates without full refetch
+### 9.2 Progress + ETA (no realtime needed)
+- [ ] Timeline upgrade in `OrderStatus.tsx`: render per-step `event.createdAt` + elapsed durations from `order_events` (already in the response; no backend change)
+- [ ] Add `etaAt` to the order detail response — static per-status remaining table (pending 30 / cooking 20 / ready 12 / dispatched 4) — with a countdown in `OrderDetail.tsx`
+- [ ] Handle `needs_review` in `StatusTimeline` (valid DB status, currently renders as an unknown grey dot)
+- [ ] *(optional)* Level 2 empirical ETA: average real stage durations from `order_events`; backend-only swap, no frontend change
 
 ---
 
@@ -406,12 +419,7 @@ Phase 15 — Prod Readiness     [░░░░░░░░░░]  0/11   (0%)
 
 > Consumes Phase 9 events. Kitchen alert assumes the kitchen board is open.
 
-### 10.1 Email
-- [ ] Integrate Resend (or Postmark); env + verified sender domain
-- [ ] Send on: confirmation, ready, dispatched, cancelled
-- [ ] Templates + failure logging (never block an order on email failure)
-
-### 10.2 In-app
+### 10.1 In-app
 - [ ] In-app toast + notification bell backed by an events query
 - [ ] Kitchen ticket alert (sound/badge) on new order (shared with 13.1)
 

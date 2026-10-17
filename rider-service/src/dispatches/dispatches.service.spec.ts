@@ -54,6 +54,10 @@ describeDb('DispatchesService phone and note snapshot', () => {
     await moduleFixture.close();
   });
 
+  beforeEach(async () => {
+    await dbService.db.delete(dispatches);
+  });
+
   afterEach(async () => {
     if (orderId) {
       await dbService.db
